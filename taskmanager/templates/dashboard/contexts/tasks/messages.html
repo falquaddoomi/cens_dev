@@ -1,0 +1,91 @@
+{% extends "dashboard/contexts/tasks/main.html" %}
+
+{% load parse_json %}
+
+{% block section_scripts %}
+$(document).ready(function() {
+	// find each textbox and highlight the save button when it's changed
+	$(".content textarea").change(function() {
+		var $saveframe = $(this).closest(".template_holder").find(".commands");
+		$saveframe.find(".remember_save").fadeIn();
+
+		// disable the other save buttons on the form to prevent disaster?
+
+		// and make this sucka never fire again
+		$(this).unbind('change');
+	});
+});
+{% endblock %}
+
+{% block section_styles %}
+.template_entry {
+	padding: 5px;
+}
+
+.template_entry .thing {
+}
+
+.template_entry .template_header {
+	background-image: url('/static/taskmanager/fugue/bonus/icons-24/balloon.png');
+	background-repeat: no-repeat; background-position: 5px center;
+
+	width: 600px;
+	padding: 10px; padding-left: 35px; font-weight: bold; font-size: 20px;
+}
+
+.template_entry .content {
+
+	padding: 10px; padding-left: 35px;
+}
+
+.template_holder .commands {
+	text-align: right; padding: 0px; padding-bottom: 20px;
+}
+
+.template_holder .commands .remember_save {
+	color: #5ac; font-weight: bold;
+}
+{% endblock %}
+
+{% block section_content %}
+<table cellpadding="0" cellspacing="0" class="messages_view_table" style="min-height: 300px; width: 100%; height: 100%; border: solid 1px gray;">
+	<tr>
+
+	<td id="messages_column" valign="top" class="column" style="border-right: solid 1px #999;">
+		<div class="col_header">
+		Messages
+		</div>
+
+		<div class="template_holder" style="padding: 10px; padding-top: 0px;">
+			{% if templates %}
+			<form method="POST" action="{% url taskmanager.subviews.contexts.tasks.update_messages %}">
+				{% csrf_token %}
+
+				{% for template in templates %}
+				<div class="template_entry" style="padding: 5px;">
+					<div class="template_header thing">{{ template.name }}</div>
+
+					<div class="arguments thing">
+						<textarea name="content__{{ template.id }}" style="width: 100%;" rows="6">{{ template.content }}</textarea>
+					</div>
+				</div>
+				{% endfor %}
+
+				<div class="commands thing">
+					<span class="remember_save" style="display: none;">remember to save</span>
+
+					<input type="hidden" name="return_page" value="{{ current_page }}" />
+					<input type="submit" style="width: 150px;" value="save changes" />
+				</div>
+			</form>
+			{% else %}
+			<div style="font-size: 18px; color: #777; padding-top: 10px;">
+			(this task has no associated messages)
+			</div>
+			{% endif %}
+		</div>
+	</td>
+
+	</tr>
+</table>
+{% endblock %}

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<title>ASAP Pilot Sign-Up Form</title>
+
+		<link rel="stylesheet" href="/static/taskmanager/ASAP/css/signup.css" type="text/css" />
+		<link rel="shortcut icon" type="image/x-icon" href="/static/taskmanager/ASAP/images/favicon.ico">
+
+		<script src="/static/taskmanager/ASAP/js/jquery-1.5.1.min.js" language="Javascript" type="text/javascript"></script>
+		<script src="/static/taskmanager/ASAP/js/jquery.scrollTo-1.4.2-min.js" language="Javascript" type="text/javascript"></script>
+		<script src="/static/taskmanager/ASAP/js/jquery-ui-1.8.10.custom.min.js" language="Javascript" type="text/javascript"></script>
+
+		<script src="/static/taskmanager/ASAP/js/signup.js" language="Javascript" type="text/javascript"></script>
+	</head>
+
+	<body>
+		<div id="trunk">
+			<div class="page_header">
+				<b>A</b>dolescent & Young Adult <b>S</b>urvivorship <b>A</b>ction <b>P</b>lan
+				<div style="font-size: smaller; padding: 5px; margin: 5px -10px -10px; background: #CEF826;">
+				Text Messaging Study
+				</div>
+			</div>
+
+			<div class="section" id="introduction">
+				<h1>About the ASAP Pilot</h1>
+
+				<div class="content">
+					<img src="/static/taskmanager/ASAP/images/ASAP_Logo_Medium.png" width="330" height="233" style="float: right; margin-left: 5px; margin-top: 15px; margin-bottom: 5px;" />
+
+					<p>
+					Thank you for agreeing to participate in the Adolescent & Young Adult Survivorship Action Plan (ASAP) Text Messaging Study. Taking part in this study includes three steps: (1) reading an online educational booklet, (2) picking your ASAP goals and (3) text-messaging.  You will now have the chance to look through and read the ASAP booklet.  Once you have clicked through the pages of the ASAP booklet you will be asked to choose 3 ASAP goals to help with your survivorship care.
+					</p>
+
+					<p>
+					Over the next few weeks you will receive texted information and questions from our text messaging system to help you complete your ASAP goals.  You will start with one goal before you move onto the next. Text messaging will end after you complete your 3 ASAP goals or after two months, whichever comes first.
+					</p>
+
+					<p>
+					At the end of the study you will receive a post-test questionnaire. Once we receive your post-test a research member will call you to talk about your experience with the text messaging system. This should last about 20 minutes.   After the call we will mail out your gift card as a thank you for your participation.
+					</p>
+
+					<div class="nextbox">
+						<a href="#prestep">it's time to begin.  please continue to the ASAP booklet.</a>
+					</div>
+				</div>
+			</div>
+
+			<div class="section step" id="prestep">
+				<h2><b>ASAP Booklet</b></h2>
+
+				<div class="content">
+					<p class="noindent">
+						Please click the link below to view the ASAP booklet, and continue when you've finished reading through it.
+					</p>
+
+					<div style="margin-top: 2em;">
+						<a class="pdflink" href="/static/taskmanager/ASAP/ASAP%20Educational%20Module.pdf" target="_blank">
+						Adolescent & Young Adult Survivorship Action Plan Booklet
+						</a>
+					</div>
+
+					<div style="text-align: center; font-size: 30px; color: #777; margin: 30px;">
+					&bullet; &bullet; &bullet;
+					</div>
+
+					<p class="noindent">
+						You have just read through the ASAP booklet and now it's time to pick your 3 personal ASAP goals.  Please start by filling out the following form so you may be entered into the text-messaging system.
+					</p>
+
+					<div class="nextbox">
+						<a href="#step1">continue to the form...</a>
+					</div>
+				</div>
+			</div>
+
+			<form action="." method="POST">
+				{% csrf_token %}
+
+				<div class="section step" id="step1">
+					<h2><b>Step 1.</b> Basic Information</h2>
+
+					<div class="content">
+						<p class="noindent">
+							Please enter your contact information so that we can send you personalized text messages.
+							The survey questions are optional, but will help us to better customize your goals.
+
+							<span class="subnote"><br />(fields in <span class="required">red</span> are required)</span>
+						</p>
+
+						<div class="formset" style="width: 150px; float: left; margin-right: 15px;">
+							<label  for="firstname" class="required">First Name:</label>
+							<input type="text" name="firstname" />
+						</div>
+						<div class="formset" style="width: 150px; float: left;">
+							<label for="lastname" class="required">Last Name:</label>
+							<input type="text" name="lastname" />
+						</div>
+						<div style="clear: both;"></div>
+
+						<div class="formset" style="width: 150px; float: left; margin-right: 15px;">
+							<label for="cellphone" class="required">Cellphone #:</label>
+							<input type="text" name="cellphone" />
+						</div>
+						<div class="formset" style="width: 150px; float: left;">
+							<label for="email" class="required">Email:</label>
+							<input type="text" name="email" />
+						</div>
+						<div style="clear: both;"></div>
+
+						<div class="formset">
+							<label for="age">Age:</label>
+							<input type="text" name="age" />
+						</div>
+
+						<div class="formset">
+							<label for="age">Zip Code:</label>
+							<input type="text" name="zipcode" />
+						</div>
+
+						<div class="formset">
+							<label for="age">Diagnosis:</label>
+							<ul id="diagnosis_list" class="checkboxlist">
+								<li><input type="checkbox" name="diagnosis" id="diagnosis_Leukemia" value="Leukemia" /> <label for="diagnosis_Leukemia">Leukemia</label></li>
+								<li><input type="checkbox" name="diagnosis" id="diagnosis_Hodgkin_Lymphoma" value="Hodgkin Lymphoma" /> <label for="diagnosis_Hodgkin_Lymphoma">Hodgkin Lymphoma</label></li>
+								<li><input type="checkbox" name="diagnosis" id="diagnosis_Non_Hodgkin_Lymphoma" value="Non-Hodgkin Lymphoma" /> <label for="diagnosis_Non_Hodgkin_Lymphoma">Non-Hodgkin Lymphoma</label></li>
+								<li><input type="checkbox" name="diagnosis" id="diagnosis_Brain_Central_nervous_system" value="Brain/Central Nervous System" /> <label for="diagnosis_Brain_Central_nervous_system">Brain/Central Nervous System</label></li>
+								<li><input type="checkbox" name="diagnosis" id="diagnosis_Kidney_Wilms_Tumor" value="Kidney/Wilm's Tumor" /> <label for="diagnosis_Kidney_Wilms_Tumor">Kidney/Wilm's Tumor</label></li>
+								<li><input type="checkbox" name="diagnosis" id="diagnosis_Neuroblastoma" value="Neuroblastoma" /> <label for="diagnosis_Neuroblastoma">Neuroblastoma</label></li>
+								<li><input type="checkbox" name="diagnosis" id="diagnosis_Soft_tissue_Sarcoma" value="Soft-tissue Sarcoma" /> <label for="diagnosis_Soft_tissue_Sarcoma">Soft-tissue Sarcoma</label></li>
+								<li><input type="checkbox" name="diagnosis" id="diagnosis_Bone_Osteosarcoma" value="Bone/Osteosarcoma" /> <label for="diagnosis_Bone_Osteosarcoma">Bone/Osteosarcoma</label></li>
+								<li><input type="checkbox" name="diagnosis" id="diagnosis_Testicular" value="Testicular" /> <label for="diagnosis_Testicular">Testicular</label></li>
+								<li><input type="checkbox" name="diagnosis" id="diagnosis_Ovary_Germ_Cell_Tumor" value="Ovary/Germ Cell Tumor" /> <label for="diagnosis_Ovary_Germ_Cell_Tumor">Ovary/Germ Cell Tumor</label></li>
+								<li><input type="checkbox" name="diagnosis" id="diagnosis_other" value="Other" /> <label for="diagnosis_other">Other</label> <span id="diagnosis_other_info" style="display: none;">(please describe: <input type="text" value="diagnosis_other_description" />)</span></li>
+								<li><input type="checkbox" name="diagnosis" id="diagnosis_dont_know" value="Don't Know" /> <label for="diagnosis_dont_know">Don't Know</label></li>
+							</ul>
+						</div>
+
+						<div class="formset">
+							<label for="questionnaire_pref">How would you like to receive the post-test questionnaire?:</label>
+							<select name="questionnaire_pref">
+								<option value="email">via email</option>
+								<option value="postal">mailed to me</option>
+								<option value="phone">over the phone</option>
+							</select>
+						</div>
+
+						<div class="nextbox">
+							<a href="#step2">next, select your goals...</a>
+						</div>
+					</div>
+				</div>
+
+				<div class="section step" id="step2">
+					<h2><b>Step 2.</b> Select your Goals</h2>
+
+					<div class="content">
+						<p class="noindent">
+						Select your goals from the lists below. You'll be able to choose the order in which you start the goals in your next step.
+						</p>
+
+						<div class="goal_container">
+							<div class="goal_column care_plan_goal">
+								<div class="col_header">Treatment Summary/<br />Survivorship Care Plan</div>
+								<ul>
+									<li>
+										<input type="radio" name="care_plan_goal" id="col1_goals_nogoal" value="" />
+										<label for="col1_goals_nogoal" class="nogoal">(no goal from this category)</label>
+									</li>
+
+									<li>
+										<input type="radio" name="care_plan_goal" id="col1_goals_1" value="col1_goals_1" />
+										<label for="col1_goals_1">Request copies of cancer treatment medical records</label>
+									</li>
+									<li>
+										<input type="radio" name="care_plan_goal" id="col1_goals_2" value="col1_goals_2" />
+										<label for="col1_goals_2">Ask my doctor to create a Survivorship Care Plan</label>
+									</li>
+									<li>
+										<input type="radio" name="care_plan_goal" id="col1_goals_3" value="col1_goals_3" />
+										<label for="col1_goals_3">Find a local survivorship clinic to get my survivorship care and/or ask for a Survivorship Care Plan</label>
+									</li>
+									<li>
+										<input type="radio" name="care_plan_goal" id="col1_goals_4" value="col1_goals_4" />
+										<label for="col1_goals_4">Schedule survivorship clinic appointment</label>
+									</li>
+								</ul>
+							</div>
+
+							<div class="goal_column late_effects_goal">
+								<div class="col_header">Late Effects<br /><br /></div>
+								<ul>
+									<li>
+										<input type="radio" name="late_effects_goal" id="col2_goals_nogoal" value="" />
+										<label for="col2_goals_nogoal" class="nogoal">(no goal from this category)</label>
+									</li>
+
+									<li>
+										<input type="radio" name="late_effects_goal" id="col2_goals_1" value="col2_goals_1" />
+										<label for="col2_goals_1">Read my Survivorship Care Plan to learn about my risk for late effects</label>
+									</li>
+									<li>
+										<input type="radio" name="late_effects_goal" id="col2_goals_2" value="col2_goals_2" />
+										<label for="col2_goals_2">Schedule my late effect screening</label>
+									</li>
+									<li>
+										<input type="radio" name="late_effects_goal" id="col2_goals_3" value="col2_goals_3" />
+										<label for="col2_goals_3">Find out how to get emotional support as a cancer survivor</label>
+									</li>
+									<li>
+										<input type="radio" name="late_effects_goal" id="col2_goals_4" value="col2_goals_4" />
+										<label for="col2_goals_4">Find out how to get cognitive (memory, learning, speech) information or support as a cancer survivor</label>
+									</li>
+									<li>
+										<input type="radio" name="late_effects_goal" id="col2_goals_5" value="col2_goals_5" />
+										<label for="col2_goals_5">Learn about physical activities to stay healthy</label>
+									</li>
+								</ul>
+							</div>
+
+							<div class="goal_column health_insurance_goal">
+								<div class="col_header">Health Insurance<br /><br /></div>
+								<ul>
+									<li>
+										<input type="radio" name="health_insurance_goal" id="col3_goals_nogoal" value="" />
+										<label for="col3_goals_nogoal" class="nogoal">(no goal from this category)</label>
+									</li>
+
+									<li>
+										<input type="radio" name="health_insurance_goal" id="col3_goals_1" value="col3_goals_1" />
+										<label for="col3_goals_1">Find out how long I'm covered under my current insurance</label>
+									</li>
+									<li>
+										<input type="radio" name="health_insurance_goal" id="col3_goals_2" value="col3_goals_2" />
+										<label for="col3_goals_2">Learn about health insurance options</label>
+									</li>
+								</ul>
+							</div>
+						</div>
+
+						<div class="nextbox">
+							<a href="#step3">finally, order your goals...</a>
+						</div>
+					</div>
+				</div>
+
+				<div class="section step" id="step3">
+					<h2><b>Step 3.</b> Order your Goals</h2>
+
+					<div class="content">
+						<p class="noindent">
+						Drag and drop the goals in the list to reorder them. Instructions on how to achieve each goal will be sent to you
+						in the order on this list, with the top being the first one sent.
+						</p>
+
+						<p class="noindent">
+						If you decide that you'd like to change your goals, scroll up and select new goals from the lists -- this list
+						will be updated to reflect your changes.
+						</p>
+
+						<div>
+							<ol id="final_goals_list">
+							</ol>
+						</div>
+
+						<div class="nextbox">
+							<a href="#finished">...and you're done!</a>
+						</div>
+					</div>
+				</div>
+
+				<div class="section step" id="finished">
+					<h2 class="complete"><b>Complete!</b></h2>
+
+					<div class="content">
+						<p>
+						At any point during the study you may choose to stop working on an ASAP goal.  Please reply STOP to the text-messaging system to end all text-messages related to that one ASAP goal.
+						</p>
+
+						<p>
+						If you have any questions or comments throughout the study, please contact our research office via email: <a href="mailto:UCLAsurvivorshipprog@mednet.ucla.edu">UCLAsurvivorshipprog@mednet.ucla.edu</a> or via phone at 310-794-2475.
+						</p>
+
+						<div id="finished_box">
+							<input type="submit" id="finished_button" name="finished_button" value="Sign Me Up!" />
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</body>
+</html>

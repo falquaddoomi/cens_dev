@@ -1,0 +1,83 @@
+{% extends "dashboard/main.html" %}
+
+{% block context_includes %}
+{% block section_includes %}{% endblock %}
+{% endblock %}
+
+{% block context_styles %}
+{% block section_styles %}{% endblock %}
+{% endblock %}
+
+{% block context_scripts %}
+{% block section_scripts %}{% endblock %}
+{% endblock %}
+
+<!-- tab chooser goes in here somewhere -->
+{% block tabs %}
+	{% if selected_serviceid %}
+	<ul class="tabber" id="tabnav">
+		<li class="tab2"><a href="/taskmanager/services/{{ selected_serviceid }}/alerts/"><img src="/static/taskmanager/fugue/icons/exclamation-button.png" border="0" class="iconified_tab" />Alerts</a></li>
+		<li class="tab1"><a href="/taskmanager/services/{{ selected_serviceid }}/status/"><img src="/static/taskmanager/fugue/icons/switch.png" border="0" class="iconified_tab" />Status</a></li>
+	</ul>
+	{% else %}
+	<ul class="tabber" id="tabnav">
+		<li class="tab2"><a href="javascript:void(0)"><img src="/static/taskmanager/fugue/icons/exclamation-button.png" border="0" class="iconified_tab" />Alerts</a></li>
+		<li class="tab1"><a href="javascript:void(0)"><img src="/static/taskmanager/fugue/icons/switch.png" border="0" class="iconified_tab" />Status</a></li>
+	</ul>
+	{% endif %}
+{% endblock %}
+
+<!-- list goes over here -->
+{% block leftlist %}
+	<div id="monitor_column" class="column">
+		<div class="col_header" style="position: relative;">
+			Services
+		</div>
+
+		<div class="itemlist chooser" style="min-height: 300px;">
+			{% for service in services %}
+			<a class="{% if service.id|lower == selected_serviceid|lower %}selected{% endif %} choosable" href="/taskmanager/services/{{ service.id }}/{{ section|default:'alerts' }}">
+				{{ service.name }}
+
+				{% if service.last_status %}
+				<div class="address_box">status: {{ service.last_status }} ({{ server.last_status_date|timesince }} ago)</div>
+				{% else %}
+				<div class="address_box">status: n/a</div>
+				{% endif %}
+			</a>
+			{% endfor %}
+		</div>
+	</div>
+{% endblock %}
+
+<!-- content area goes in here, too -->
+{% block context_content %}
+	{% if selected_serviceid %}
+		<div id="section_holder">
+			{% block section_content %}{% endblock %}
+		</div>
+
+		<div style="text-align: right;">
+			<b>server time:</b> {% now "N j Y, P" %}
+		</div>
+	{% else %}
+		<table cellpadding="0" cellspacing="0" style="min-height: 300px; width: 100%; border: solid 1px gray;">
+			<tr>
+				<td valign="top" class="column" style="height: auto;">
+					<div class="col_header">&nbsp;</div>
+				</td>
+			</tr>
+
+			<tr>
+				<td>
+					<div style="min-height: 300px; background: url('/static/taskmanager/images/diagonal-gray.png');"></div>
+				</td>
+			</tr>
+		</table>
+	{% endif %}
+{% endblock %}
+
+{% block context_divs %}
+	{% block section_divs %}
+	{% endblock %}
+{% endblock %}

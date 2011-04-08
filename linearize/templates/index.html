@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<title>XML Linearizer v0.1</title>
+
+		<link rel="stylesheet" type="text/css" href="/static/linearize/css/linearize.css" />
+
+		<script src="/static/linearize/js/jquery-1.5.1.min.js" type="text/javascript" language="Javascript"></script>
+		<script src="/static/linearize/js/jquery.scrollTo-min.js" type="text/javascript" language="Javascript"></script>
+		<script src="/static/linearize/js/jquery.tabOverride.js" type="text/javascript" language="Javascript"></script>
+
+		<script src="/static/linearize/js/utilities.js" type="text/javascript" language="Javascript"></script>
+		<script src="/static/linearize/js/linearize.js" type="text/javascript" language="Javascript"></script>
+	</head>
+
+	<body>
+		<div id="menu">
+			<h1>&bull; XML Linearizer (ver 0.1)</h1>
+
+			<div style="position: absolute; bottom: 10px; right: 10px; width: 200px; text-align: right;">
+				<b>pages:</b>
+				<select id="visible_pages_select">
+					<option value="1">one</option>
+					<option value="2">two</option>
+					<option value="3">three</option>
+				</select>
+			</div>
+		</div>
+
+		<div id="editor">
+			<div id="slider">
+				<div class="panel">
+					<div class="tbox">
+						<div class="toolbar">
+							<a href="#lock" class="command lock_cmd notitle">reformat</a>
+							<a href="#wrap" class="command nowrap_cmd notitle">unwrap</a>
+						</div>
+
+						<textarea>asdf</textarea>
+					</div>
+				</div>
+
+				<div class="panel">
+					<div class="tbox">
+						<div class="toolbar">
+							<a href="#lock" class="command lock_cmd notitle">reformat</a>
+							<a href="#wrap" class="command nowrap_cmd notitle">unwrap</a>
+						</div>
+
+						<textarea>xcvb</textarea>
+					</div>
+				</div>
+
+				<div class="panel">
+					<div class="tbox">
+						<div class="toolbar">
+							<a href="#lock" class="command lock_cmd notitle">reformat</a>
+							<a href="#wrap" class="command nowrap_cmd notitle">unwrap</a>
+						</div>
+
+						<textarea>rtyu</textarea>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="chooser">
+			<div class="doc selected">1</div>
+			<div class="doc">2</div>
+			<div class="doc">3</div>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,177 @@
+body {
+	margin: 0; padding: 0;
+	font-family: Tahoma, sans-serif; font-size: 12px;
+	height: 100%;
+}
+
+
+/*
+=================================================================
+=== menu
+=================================================================
+*/
+
+#menu {
+	position: absolute; left: 0px; top: 0px; right: 0px; z-index: 100;
+	background: #eee;
+	height: 40px;
+	padding: 10px;
+
+	border-left: solid 1px white; border-top: solid 1px white;
+	border-right: solid 1px #ccc; border-bottom: solid 1px #ccc;	
+	
+	box-shadow: 0px 0px 5px #000;
+	-moz-box-shadow: 0px 0px 5px #000;
+	-webkit-box-shadow: 0px 0px 5px #000;
+}
+
+/*
+=================================================================
+=== editor
+=================================================================
+*/
+
+#editor {
+	position: absolute; left: 0px; top: 60px; right: 0px; bottom: 100px; z-index: 50;
+	overflow: hidden;
+	
+	box-shadow: 0px 0px 10px #000;
+	-moz-box-shadow: 0px 0px 10px #000;
+	-webkit-box-shadow: 0px 0px 10px #000;
+	
+	background: #aaa;
+}
+
+#editor #slider {
+	/* position: relative; */
+}
+
+#editor .panel {
+	float: left;
+	margin: 0px; padding: 0px; background: #aaa;
+}
+
+.panel .tbox {
+	background: white;
+	overflow: hidden;
+	margin: 10px; padding: 20px;
+}
+
+
+/* === text area */
+
+.tbox textarea {
+	width: 100%; height: 90%; border: none;
+	resize: none;
+}
+
+.tbox textarea.nonwrapped {
+	/* perhaps some kind of non-wrapping style? */
+	overflow-x: scroll;
+}
+
+
+/* === toolbox */
+
+.tbox .toolbar {
+	border-bottom: solid 1px #ccc; padding: 5px 0px 5px 0px; margin-bottom: 5px;
+}
+
+.tbox .toolbar .command {
+	display: inline-block; height: 16px; padding: 5px 5px 5px 25px; text-decoration: none; font-weight: bold; color: black;
+	line-height: 16px;
+
+	background-position: 5px center;
+	background-repeat: no-repeat;
+	
+	border-radius: 3px;
+}
+
+.tbox .toolbar .command:hover {
+	background-color: #eee; text-decoration: underline;
+}
+
+.command.lock_cmd { background-image: url('/static/linearize/icons/silk/lock.png'); }
+.command.wrap_cmd { background-image: url('/static/linearize/icons/silk/arrow_undo.png'); }
+.command.nowrap_cmd { background-image: url('/static/linearize/icons/silk/arrow_right.png'); }
+
+.tbox .toolbar .command.notitle {
+	background-position: 5px center;
+	width: 0px; height: 16px; padding-right: 0px; overflow: hidden;
+}
+
+
+/*
+=================================================================
+=== chooser
+=================================================================
+*/
+
+#chooser {
+	position: absolute; left: 0px; bottom: 0px; right: 0px; z-index: 10;
+	height: 100px;
+	margin: 0; padding: 0;
+	background: #333;
+}
+
+#chooser .doc {
+	float: left;
+	width: 70px; height: 70px; margin: 10px;
+	background: white; border: solid 5px white;
+	cursor: pointer;
+	
+	text-align: center;
+	font-size: 55px; font-weight: bold; color: #aaa;
+}
+
+#chooser .doc.hidden {
+	opacity: 0.2;
+}
+
+#chooser .doc.selected {
+	/* background: #ff5 url('/static/linearize/images/triangle.png') no-repeat 50% 105%; */
+	background: #ff5;
+	color: black;
+}
+
+#chooser .doc:hover {
+	background: #ffa;
+}
+
+#chooser .doc.disabled {
+	border: solid 5px #ccc;
+	background: #ccc;
+}
+
+#chooser .doc.disabled.selected {
+	background: #aa5;
+}
+
+
+/*
+=================================================================
+=== aesthetics
+=================================================================
+*/
+
+h1 {
+  font-family: Georgia,Serif;
+  font-size: 36px;
+  margin: 0;
+  text-shadow: 1px 1px 0 #FFFFFF;
+}
+
+.doc {
+	box-shadow: 5px 5px 5px #000;
+	-moz-box-shadow: 5px 5px 5px #000;
+	-webkit-box-shadow: 5px 5px 5px #000;
+}
+
+.tbox {
+	/*
+	box-shadow: 5px 5px 15px #333;
+	-moz-box-shadow: 5px 5px 15px #333;
+	-webkit-box-shadow: 5px 5px 15px #333;
+	*/
+	border: solid 1px #ccc;
+}

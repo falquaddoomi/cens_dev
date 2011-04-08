@@ -1,0 +1,29 @@
+{% extends "dashboard/contexts/monitor/main.html" %}
+
+{% block section_styles %}
+	{% block status_styles %}{% endblock %}
+{% endblock %}
+
+{% block section_scripts %}
+	{% block status_scripts %}{% endblock %}
+{% endblock %}
+
+{% block section_content %}
+<table cellpadding="0" cellspacing="0" class="status_view_table" style="min-height: 300px; width: 100%; height: 100%; border: solid 1px gray;">
+	<tr>
+
+	<td id="status_column" valign="top" class="column" style="border-right: solid 1px #999;">
+		<div class="col_header">
+		Status
+		</div>
+
+		<div style="padding: 10px;">
+			{% block status_content %}
+			<div style="font-size: 18px; color: #777;">(this service has no associated status information)</div>
+			{% endblock %}
+		</div>
+	</td>
+
+	</tr>
+</table>
+{% endblock %}

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<title>Task Manager :: {{ context|capfirst }}</title>
+
+		{% if context == "asdf" %}
+		<link rel="shortcut icon" href="/static/taskmanager/context-icons/{{ context }}_favicon.ico" type="image/x-icon" />
+		{% else %}
+		<link rel="shortcut icon" href="/static/taskmanager/favicon.ico" type="image/x-icon" />
+		{% endif %}
+
+		<script type="text/javascript" src="/static/taskmanager/jquery-1.4.2.min.js"></script>
+		<script type="text/javascript" src="/static/taskmanager/jquery-ui-1.8.4.custom.min.js"></script>
+		<script type="text/javascript" src="/static/taskmanager/jquery.calendrical.js"></script>
+		<script type="text/javascript" src="/static/taskmanager/fullcalendar.min.js"></script>
+		<script type="text/javascript" src="/static/taskmanager/jquery.blockUI.js"></script>
+		<script type="text/javascript" src="/static/taskmanager/jquery.nap-1.0.0.js"></script>
+		<script type="text/javascript" src="/static/taskmanager/facebox/facebox.js"></script>
+
+		<link rel="stylesheet" type="text/css" href="/static/taskmanager/calendrical.css" />
+		<link rel="stylesheet" type="text/css" href="/static/taskmanager/fullcalendar.css" />
+		<link rel="stylesheet" type="text/css" href="/static/taskmanager/facebox/facebox.css" media="screen" />
+		<link rel="stylesheet" type="text/css" href="/static/taskmanager/css/tabs.css" />
+
+		<link rel="stylesheet" type="text/css" href="/static/taskmanager/taskmanager.css" />
+		<link rel="stylesheet" type="text/css" href="/static/taskmanager/taskmanager_dashboard.css" />
+		<link rel="stylesheet" type="text/css" href="/static/taskmanager/taskmanager_details.css" />
+
+		{% block includes %}{% endblock %}
+
+		<style>
+		body {
+			/* sad, but necessary to keep the floating header bits from making a mess when the window is too narrow  */
+			min-width: 764px;
+		}
+
+		/* generic style for perfectly rounded objects */
+		.rounded_corners {
+			-moz-border-radius: 5px;
+			-webkit-border-radius: 5px;
+			border-radius: 5px;
+		}
+
+		/* div surrounding the context switcher button */
+		#context_switcher_btn_frame {
+			float: left; padding: 0px; text-align: center; border: solid 1px #ddd; margin: 5px;
+		}
+
+		/* context switcher dialog button */
+		#context_switcher_btn {
+			width: 32px; height: 33px; display: block;
+			z-index: 10;
+			padding: 10px 12px;
+
+			background-position: center center; background-repeat: no-repeat; text-decoration: none;
+			outline: none;
+		}
+		#context_switcher_btn:hover {
+			background-color: #FDF7BB;
+			border: solid 3px #FEF8D8;
+			padding: 7px 9px;
+		}
+		#context_switcher_btn.selected {
+			border: solid 3px gray; background-color: white; position: relative;
+			border-bottom: none;
+			padding: 7px 9px;
+			margin-bottom: 3px;
+			z-index: 10;
+
+			/* partially remove corner rounding to properly line up with menu */
+			-moz-border-radius: 5px 5px 0px 0px;
+			-webkit-border-radius: 5px 5px 0px 0px;
+			border-radius: 5px 5px 0px 0px;
+		}
+
+		#context_switcher_dialog {
+			background: white; border: solid 3px gray;
+			position: absolute; padding: 0px; display: none; z-index: 5;
+			-moz-border-radius: 0px 5px 5px 5px;
+		}
+
+		#context_switcher_dialog a {
+			display: block;
+			margin: 0px; padding: 15px; padding-left: 60px;
+			color: black; font-size: 22px; text-decoration: none; font-weight: bold;
+			background-position: 10px center; background-repeat: no-repeat;
+		}
+		#context_switcher_dialog a:hover {
+			background-color: #E3EFF3;
+		}
+		#context_switcher_dialog a.viewing {
+			/*
+			border-right: solid 10px #cce;
+			*/
+		}
+
+		#context_switcher_dialog a .subby {
+			font-size: 12px; color: #777; margin-left: 6px; font-weight: normal;
+		}
+
+		.patients_context {
+			background-image: url('/static/taskmanager/icons/Users.png');
+		}
+		.patients_context.selected {
+			background-image: url('/static/taskmanager/icons/Users-Stencil.png');
+		}
+
+		.tasks_context {
+			background-image: url('/static/taskmanager/icons/Run.png');
+		}
+		.tasks_context.selected {
+			background-image: url('/static/taskmanager/icons/Run-Stencil.png');
+		}
+
+		.monitor_context {
+			background-image: url('/static/taskmanager/icons/Monitors.png');
+		}
+		.monitor_context.selected {
+			background-image: url('/static/taskmanager/icons/Monitors-Stencil.png');
+		}
+		{% block styles %}{% endblock %}
+		</style>
+
+		<script type="text/javascript">
+
+		// external so that sections can use it, too
+		function toggleDialog($me, $dialog, $header) {
+			var xpadding = ($dialog.outerWidth() - $dialog.width());
+			var ypadding = ($dialog.outerHeight() - $dialog.height());
+
+			var $img = $me.find("img");
+
+			if ($dialog.is(":hidden")) {
+				$me.addClass("selected");
+				$img.attr("src", "/static/taskmanager/icons/Add%20Stencil%20Button.png");
+
+				$dialog.css({
+					'top':  $header.offset().top + $header.outerHeight(),
+					'left': $header.offset().left,
+					'width': $header.outerWidth() - xpadding
+					/* 'height': $("#schedule_column").outerHeight() - $header.outerHeight() - ypadding */
+				}).slideDown();
+			}
+			else {
+				$me.removeClass("selected");
+				$img.attr("src", "/static/taskmanager/icons/Add%20Green%20Button.png");
+
+				$dialog.fadeOut();
+			}
+		}
+
+
+		$(document).ready(function() {
+			// bind up the context chooser
+			$("#context_switcher_btn").click(function() {
+				var $me = $(this);
+				var $dialog = $("#context_switcher_dialog");
+
+				var xpadding = ($dialog.outerWidth() - $dialog.width());
+				var ypadding = ($dialog.outerHeight() - $dialog.height());
+
+				if ($dialog.is(":hidden")) {
+					$me.addClass("selected");
+
+					$dialog.css({
+						'top':  $me.offset().top + $me.outerHeight() - 3,
+						'left': $me.offset().left
+						/* 'height': $("#schedule_column").outerHeight() - $header.outerHeight() - ypadding */
+					}).slideDown();
+				}
+				else {
+					$me.removeClass("selected");
+
+					$dialog.hide();
+				}
+			});
+
+			// auto-refresh the page if the user is idle for some amount of time
+			$(document).nap(
+				function() {
+					// happens when we fall asleep
+					window.location.reload(true);
+				}
+			);
+			$.fn.nap.standbyTime = 30; // refresh every 30 seconds
+		});
+
+
+
+		{% block scripts %}{% endblock %}
+		</script>
+	</head>
+
+	<body {% if section %}id="{{ section }}"{% endif %}>
+		<div id="context_switcher" style="padding-left: 7px; padding-top: 7px; position: relative; margin: 0px; margin-bottom: 1em; height: 100%; overflow: hidden;">
+			<div id="context_switcher_btn_frame" class="rounded_corners">
+				<a alt="Switch Context" id="context_switcher_btn" href="#" class="rounded_corners free_command {{ context }}_context">
+				</a>
+			</div>
+
+			<div style="float: left; width: 600px; height: 30px; padding: 0px;">
+				<div style="font-weight: bold; font-size: 28px; position: relative; top: 12px; padding-left: 2px;">
+				<!--
+				{% block header %}{% endblock %}
+				-->
+				Task Manager :: {{ context|capfirst }}
+				</div>
+			</div>
+		</div>
+
+		{% block content %}{% endblock %}
+
+		<!-- the context switcher is itself a hidden div -->
+		<div id="context_switcher_dialog" style="width: 280px;">
+			<a class="patients_context {% if context == 'patients' %}viewing{% endif %}" href="/taskmanager/patients/" style="border-bottom: solid 1px #ccc;">
+				Patients
+				<div class="subby">processes, tasks, history, calendar</div>
+			</a>
+			<a class="tasks_context {% if context == 'tasks' %}viewing{% endif %}" href="/taskmanager/tasks/" style="border-bottom: solid 1px #ccc;">
+				Task Editor
+				<div class="subby">templates, messages</div>
+			</a>
+			<a class="monitor_context {% if context == 'monitor' %}viewing{% endif %}" href="/taskmanager/monitor/">
+				System Monitor
+				<div class="subby">alerts, status</div>
+			</a>
+		</div>
+	</body>
+</html>
