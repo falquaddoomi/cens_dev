@@ -47,7 +47,7 @@ class BaseXmlTask(BaseTask):
                 # log it!
                 SessionMessage(session=self.session, message=message.text, outgoing=False).save()
                 # and expand the node associated with this condition
-                self._exec_children(foundCond.node, foundCond.context)
+                self._exec_children(condition.node, condition.context)
                 return True
 
         # nothing matched; let's tell our caller that
