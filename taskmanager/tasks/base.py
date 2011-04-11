@@ -14,6 +14,18 @@ class BaseTask(object):
         self.patient = patient
         self.session = session
         self.args = args
+        self.prefies = []
+
+    def prefixes(self):
+        """
+        Returns a prefix (or list of them) which can be used to activate this task. Necessary
+        for demultiplexing different kinds of running tasks from each other.
+
+        Incoming messages will have their first word compared against the list of prefixes
+        for each running task; the first matching task will have handle() called on it,
+        proceeding through each matching task and ending when one returns True.
+        """
+        return self.prefixes
 
     def start(self):
         """

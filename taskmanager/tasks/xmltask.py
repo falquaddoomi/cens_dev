@@ -3,9 +3,6 @@ import json, re
 from lxml import etree
 from parsedatetime import parsedatetime
 
-# imports the django settings, of which we need REPO_ROOT to open script XML files
-import settings
-
 from django.template.loader import Template, Context
 
 from base import BaseTask, TaskCompleteException
@@ -31,9 +28,12 @@ class BaseXmlTask(BaseTask):
         print "Beginning execution of %s!" % (self.args['script'])
         
         # read the first-level element (ostensibly interaction)
-        self.tree = etree.parse(os.path.join(settings.REPO_ROOT, "taskmanager", "scripts", self.args['script']))
+        self.tree = etree.parse(os.path.join(os.path.dirname(__file__), "scripts", self.args['script']))
+        interaction = self.tree.getroot()
+        # grab some top-level params which apply to the entire task
+        self.prefixes = [interaction.get("prefix")]
         # and start executing its children
-        self._exec_children(self.tree.getroot())
+        self._exec_children(interaction)
         
     def handle(self, message):
         # if there aren't any pending conditions, this is a good time to throw a TaskCompleteException

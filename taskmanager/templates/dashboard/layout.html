@@ -18,6 +18,9 @@
 		<script type="text/javascript" src="/static/taskmanager/jquery.nap-1.0.0.js"></script>
 		<script type="text/javascript" src="/static/taskmanager/facebox/facebox.js"></script>
 
+		<!-- to satisfy csrf validation on AJAX requests -->
+		<script type="text/javascript" src="/static/taskmanager/taskmanager.js"></script>
+
 		<link rel="stylesheet" type="text/css" href="/static/taskmanager/calendrical.css" />
 		<link rel="stylesheet" type="text/css" href="/static/taskmanager/fullcalendar.css" />
 		<link rel="stylesheet" type="text/css" href="/static/taskmanager/facebox/facebox.css" media="screen" />
@@ -177,6 +180,7 @@
 			});
 
 			// auto-refresh the page if the user is idle for some amount of time
+			/*
 			$(document).nap(
 				function() {
 					// happens when we fall asleep
@@ -184,6 +188,7 @@
 				}
 			);
 			$.fn.nap.standbyTime = 30; // refresh every 30 seconds
+			*/
 		});
 
 

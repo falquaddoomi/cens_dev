@@ -52,7 +52,13 @@ class Patient(models.Model):
         if self.contact_pref == "phone": return self.address
         elif self.contact_pref == "email": return self.email
         elif self.contact_pref == "irc": return self.handle
-        else: return self.phone
+        else: return self.address
+
+    def get_mode_address(self,mode):
+        if mode == "phone": return self.address
+        elif mode == "email": return self.email
+        elif mode == "irc": return self.handle
+        else: return self.address
         
     def __unicode__(self):
         return "%s, %s (%s)" % (self.last_name, self.first_name, self.address)

@@ -109,7 +109,7 @@ def history(request, patientid):
 
 @csrf_protect
 @login_required
-def messagelog(request, patientid):
+def messagelog(request, patientid, mode='sms'):
     field_vars = {
         'section': 'messagelog',
         'patient': Patient.objects.get(pk=patientid)
@@ -119,7 +119,10 @@ def messagelog(request, patientid):
     from rapidsms.contrib.messagelog.models import Message
 
     # and grab the patient's identity from the Patient object
-    address = field_vars['patient'].address
+    if mode:
+        address = field_vars['patient'].get_mode_address(mode)
+    else:
+        address = field_vars['patient'].address
         
     if 'from' in request.GET:
         # parse at least the from field, and preferably the to field as well

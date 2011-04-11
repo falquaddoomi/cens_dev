@@ -30,6 +30,7 @@ urlpatterns = patterns('',
     # user-level apps!
     (r'^linearize/', include('cens_dev.linearize.urls')),
     (r'^taskmanager/', include('cens_dev.taskmanager.urls')),
+    (r'^twilioconnect/', include('cens_dev.twilioconnect.urls')),
 )
 
 if settings.DEBUG:
