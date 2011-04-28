@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<!DOCTYPE interaction SYSTEM "xmltask.dtd">
+
+<interaction id="toplevel">
+	<message>
+	Did u ask ur doctor 2 create a survivorship care plan? Reply YES or NO, or 'missed' if u missed ur appt.
+	</message>
+	
+	<response pattern="yes">
+		<message>
+		Congrats 4 asking ur doctor. Did ur doctor agree 2 create ur survivorship care plan? Text YES or NO.
+		</message>
+		
+		<response pattern="yes">
+			<message>
+			How helpful was the info texted 2 u? TEXT # 1-5, with 1- not helpful to 5- very helpful.
+			</message>
+			
+			<response pattern="*">
+				<message>
+				Thank u for sharing ur opinions. Congrats on completing ur ASAP goal.
+				</message>
+			</response>
+		</response>
+
+		<response pattern="no">
+			<message>
+			That’s ok. There are survivorship clinics that can create a survivorship care plan. Would u like info 2 find a local survivorship clinic?
+			</message>
+			
+			<response pattern="yes">
+				<schedule task="3_FindSC" offset="30 minutes after" />
+			</response>
+			
+			<response pattern="no">
+				<message>
+				Please tell us what additional info or resources u need 2 ask ur doctor 4 a survivorship care plan.
+				</message>
+				
+				<response pattern="*">
+					<message>
+					Thank u 4 participating.
+					</message>
+				</response>
+			</response>
+		</response>
+	</response>
+	
+	<response pattern="no">
+		<message>
+		Please tell us what additional info or resources u need 2 ask ur doctor.
+		</message>
+
+		<response pattern="*">
+			<message>
+			Thank u 4 participating.
+			</message>
+		</response>
+	</response>
+	
+	<response pattern="missed">
+		<schedule task="2_SCP" offset="5 minutes after" params="repeating:1" />
+	</response>
+</interaction>

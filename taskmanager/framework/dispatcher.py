@@ -118,6 +118,8 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
                 patient = Patient.objects.get(email=msg.connection.identity)
             elif backend == u'irc':
                 patient = Patient.objects.get(handle=msg.connection.identity)
+            elif backend == u'tropo':
+                patient = Patient.objects.get(email=msg.connection.identity)
             else:
                 # unrecognizable backend...what now?
                 raise Exception("Unrecognizable backend")

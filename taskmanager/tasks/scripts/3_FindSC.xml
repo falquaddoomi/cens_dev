@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<!DOCTYPE interaction SYSTEM "xmltask.dtd">
+
+<interaction id="toplevel">
+	<message>
+	Hi <<participant>>. We will be texting u resources 2 help with ur ASAP goal: <<To find a local survivorship clinic. Visit bit.ly/sclinic 2 find a clinic near u.>>
+	</message>
+	
+	<timeout id="find_clinic" delay="5 days after">
+		<message>
+		Hi <<participant>>. Did u visit bit.ly/sclinic 2 find a survivorship clinic near u?
+		</message>
+		
+		<response id="found_clinic" pattern="yes">
+			<message>
+			Have u contacted one of the survivorship clinics from bit.ly/sclinic?
+			</message>
+			
+			<response pattern="yes">
+				<message>
+				Great. Do u plan 2 visit this clinic 2 get ur survivorship care and/or ask 4 a survivorship care plan? Text YES or NO.
+				</message>
+				
+				<response pattern="yes">
+					<message>
+					How helpful was the info on the website (bit.ly/sclinic)? TEXT # 1-5, with 1- not helpful to 5- very helpful.
+					</message>
+
+					<response pattern="*">
+						<message>
+						Thank u for sharing ur opinions. Congrats on completing ur ASAP goal.
+						</message>
+					</response>
+				</response>
+				
+				<response pattern="no">
+					<message>
+					Please tell us why u r not interested in visiting a survivorship clinic.
+					</message>
+					
+					<response pattern="*">
+						<message>
+						Thank u 4 participating.
+						</message>
+					</response>
+				</response>
+			</response>
+			
+			<response pattern="no">
+				<message>
+				That's ok. Life gets busy. We'll send u a friendly reminder in a week.
+				</message>
+
+				<timeout delay="7 days after">
+					<link target="found_clinic" />
+				</timeout>
+			</response>
+		</response>
+		
+		<response pattern="no">
+			<message>
+			That's ok. Life gets busy. We'll send u a friendly reminder in a week.
+			</message>
+			
+			<timeout delay="7 days after">
+				<link target="find_clinic" />
+			</timeout>
+		</response>
+	</timeout>
+</interaction>

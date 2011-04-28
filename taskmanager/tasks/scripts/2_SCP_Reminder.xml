@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!DOCTYPE interaction SYSTEM "xmltask.dtd">
+
+<interaction id="toplevel">
+	<message>
+	A reminder that ur doctor appt 2 ask 4 a survivorship care plan is tomorrow <<@5:15 PM (02/28/2011)>>. Remember 2 bring ur cancer treatment records. Reply 'Appt cancel' if canceled. 
+	</message>
+	
+	<response pattern="cancel">
+		<message>
+		Your appointment has been cancelled. Thank you for participating.
+		</message>
+	
+		<abort scope="session" />
+	</response>
+</interaction>

@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+<!DOCTYPE interaction SYSTEM "xmltask.dtd">
+
+<interaction id="toplevel">
+	<message>
+	Hi {{participant}}. We will be texting u resources 2 help with ur ASAP goal: <Get copies of cancer treatment medical records.  First contact the doctors who treated ur cancer or medical records office. U may need to fill out a written request form.}}
+	</message>
+	
+	<timeout duration="5 days">
+		<message>
+		Hi {{participant}}. Did u request ur cancer treatment medical records?
+		</message>
+		
+		<response pattern="yes">
+			<message>
+			Great! Under CA law, u have the right 2 get copies of ur medical record within 15 days of a written request.
+			</message>
+			
+			<timeout id="received_records_yet" duration="15 days">
+				<message>
+				Hi {{participant}}. Have u received ur cancer treatment medical records?
+				</message>
+				
+				<response pattern="yes">
+					<message>
+					How helpful was the info texted 2 u? Text: # 1-5, with 1- not helpful to 5- very helpful.
+					</message>
+				</response>
+				
+				<response id="clrc_link" pattern="no">
+					<message>
+					It's ur right 2 get copies of medical records w/in 15 days of a written request. Cancer Legal Resource Center can help, call toll free 866-843-2572 or visit www.CancerLegalResourceCenter.org
+					</message>
+					
+					<timeout duration="5 days">
+						<message>
+						Did u contact the Cancer Legal Resource Center 2 help u get ur medical records?  Text YES or NO.
+						</message>
+						
+						<response pattern="yes">
+							<message>
+							Congrats on taking this step. How helpful was the info provided by the Cancer Legal Resource Center? Text: #1-5, with 1- not helpful to 5- very helpful.
+							</message>
+							
+							<response pattern="*">
+								<!-- FIXME: somehow store their response -->
+								
+								<message>
+								Thank u 4 sharing ur opinions.
+								</message>
+							</response>
+						</response>
+
+						<response pattern="no">
+							<message>
+							Please tell us what additional info or resources u need to get ur cancer treatment medical records.
+							</message>
+							
+							<response pattern="*">
+								<!-- FIXME: somehow store their response -->
+							
+								<message>
+								Thank u 4 participating.
+								</message>
+							</response>
+						</response>
+					</timeout>
+				</response>
+			</timeout>
+		</response>
+		
+		<response pattern="no">
+			<message>
+			What is the reason 4 not asking for ur medical records? TEXT Busy, Can't find the #, Costs too much, or Other.
+			</message>
+			
+			<response pattern="No Time">
+				<message>
+				Life gets busy. We'll send u a friendly reminder in a week.
+				</message>
+				
+				<timeout duration="7 days">
+					<link target="received_records_yet" />
+				</timeout>
+			</response>
+			
+			<response pattern="Can't find #">
+				<message>
+				U can ask ur current doctor or social worker 4 help requesting ur cancer treatment medical records.
+				</message>
+				
+				<timeout duration="7 days">
+					<link target="received_records_yet" />
+				</timeout>
+			</response>
+			
+			<response pattern="Cost">
+				<message>
+				If ur current doctor requests copies of ur records, u may not have 2 pay.  Cancer Legal Resource Center can help. Call toll free 866-843-2572 or visit www.CancerLegalResourceCenter.org
+				</message>
+				
+				<timeout duration="5 days">
+					<link target="clrc_link" />
+				</timeout>
+			</response>
+			
+			<response pattern="Other">
+				<message>
+				Cancer Legal Resource Center can help w/ getting ur medical records. Call toll free 866-843-2572 or visit www.CancerLegalResourceCenter.org
+				</message>
+				
+				<timeout duration="5 days">
+					<link target="clrc_link" />
+				</timeout>
+			</response>
+		</response>
+	</timeout>
+</interaction>

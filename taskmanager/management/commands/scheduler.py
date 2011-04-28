@@ -4,6 +4,8 @@ from twisted.web.client import Agent
 from twisted.web.http_headers import Headers
 from stringprod import StringProducer
 
+import urllib
+
 import sys, json
 from datetime import datetime
 
@@ -212,7 +214,7 @@ def check_schedule():
         if sched_task.process:
             payload_dict['process'] = sched_task.process.id
 
-        payload = "&".join(map(lambda x: "%s=%s" % (x, payload_dict[x]), payload_dict))
+        payload = urllib.urlencode(payload_dict)
 
         d = agent.request(
             'POST',
@@ -246,7 +248,7 @@ def check_timeouts():
             'session': session.id
             }
 
-        payload = "&".join(map(lambda x: "%s=%s" % (x, payload_dict[x]), payload_dict))
+        payload = urllib.urlencode(payload_dict)
 
         d = agent.request(
             'POST',

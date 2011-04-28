@@ -8,10 +8,11 @@ from models import IncomingSMS
 @csrf_exempt
 def incoming(request):
     # log the incoming data somehow
-    incoming = IncomingSMS(
+    logger = IncomingSMS(
         get_data=json.dumps(request.GET),
-        post_data=json.dumps(request.POST)
+        post_data=json.dumps(request.POST),
+        headers=str(request.META)
     )
-    incoming.save()
+    logger.save()
     
     return render_to_response('incoming.html', {})

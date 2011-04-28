@@ -234,7 +234,7 @@ class Session(models.Model):
     completed = models.BooleanField(blank=True,default=False)
     completed_date = models.DateTimeField(blank=True,null=True)
     timeout_date = models.DateTimeField(blank=True,null=True)
-    state = models.CharField(max_length=100)    
+    state = models.CharField(max_length=100)
 
     objects = SessionManager()
 
@@ -264,15 +264,6 @@ class SessionMessage(models.Model):
             return "Sent to %s: %s" % (self.session.patient.address, self.message)
         else:
             return "Received from %s: %s" % (self.session.patient.address, self.message)
-    
-class TaskPatientDatapoint(models.Model):
-    patient = models.ForeignKey(Patient)
-    task = models.ForeignKey(Task)
-    add_date = models.DateTimeField(auto_now_add=True)
-    data = models.TextField()
-
-    def __unicode__(self):
-        return "Datapoint for %s on %s" % (self.patient.address, self.task.name)
 
 # =================================================================
 # ==== Scheduled Tasks
