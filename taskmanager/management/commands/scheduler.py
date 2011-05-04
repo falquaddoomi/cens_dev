@@ -4,7 +4,7 @@ from twisted.web.client import Agent
 from twisted.web.http_headers import Headers
 from stringprod import StringProducer
 
-import urllib
+import urllib, urlparse
 
 import sys, json
 from datetime import datetime
@@ -13,18 +13,11 @@ from django.core.management.base import BaseCommand, CommandError
 from taskmanager.models import *
 
 from django.conf import settings
-    
-TARGET_SERVER = 'http://localhost:8001/taskmanager/exec' if settings.SCHEDULER_TARGET_URL is None else settings.SCHEDULER_TARGET_URL
-TARGET_TIMEOUT_SERVER = 'http://localhost:8001/taskmanager/timeout' if settings.SCHEDULER_TARGET_TIMEOUT_URL is None else settings.SCHEDULER_TARGET_TIMEOUT_URL
-QUIET_HOURS = {'start': 22, 'end': 8}
-
-CHECK_INTERVAL = 15 # time in seconds between polls of the database
 
 # used by check_schedule() to determine if it can send tasks
 # and by showJSONStatus() to let the interface know we're sleeping
 def isQuietHours():
-    global QUIET_HOURS
-    return (not QUIET_HOURS is None) and (datetime.now().hour >= QUIET_HOURS['start'] or datetime.now().hour <= QUIET_HOURS['end'])
+    return (not settings.SCHEDULER_QUIET_HOURS is None) and (datetime.now().hour >= settings.SCHEDULER_QUIET_HOURS['start'] or datetime.now().hour <= settings.SCHEDULER_QUIET_HOURS['end'])
 
 
 # =========================================================================================
@@ -104,44 +97,6 @@ class HTTPStatusCommand(resource.Resource):
         else:
             print "[GET] /status (json)"
             return self.showJSONStatus('alltasks' in request.args)
-    
-class HTTPScheduleCommand(resource.Resource):
-    def __init__(self):
-        resource.Resource.__init__(self)
-    
-    isLeaf = True
-    def render_GET(self, request):
-        print "[GET] /schedule"
-        return "<html>schedule via POST</html>"
-    
-    def render_POST(self, request):
-        print "[POST] /schedule"
-
-        # nab the information from the post
-        try:
-            newtask = json.load(request.content)
-
-            if 'process' in postargs:
-                process = Process.objects.get(pk=postargs['process'])
-            else:
-                process = None
-            
-            nt = ScheduledTask(
-                patient = Patient.objects.get(address=newtask['patient']).id,
-                task = Task.objects.get(name=newtask['task']).id,
-                process = process,
-                arguments = newtask['arguments'],
-                completed = False,
-                schedule_date = datetime.strptime(newtask['schedule_date'], "%Y-%m-%dT%H:%M:%S.%f")
-            )
-            nt.save()
-            
-            print "Task scheduled: " + str(task)
-        except:
-            print "ERROR: could not schedule task " + str(task)
-            print "INFO: ", sys.exc_info()[0]
-            
-        return "<html>this is correct</html>"
 
 
 # =========================================================================================
@@ -178,18 +133,15 @@ def session_timeout_errored(response, sessionid):
 # =========================================================================================
 
 def check_schedule():
-    # the server we should poke, defined at the top of this file
-    global TARGET_SERVER
-    # and our quiet hours settings
-    global QUIET_HOURS
-    global CHECK_INTERVAL
-
-    # before we do anything, make sure it's not "quiet hours" (10pm to 9am)
+    # before we do anything, make sure it's not "quiet hours"
     # if it is, do nothing and run this method later
-    # FIXME: move the quiet hours settings into a file, the interface, whatever...they shouldn't be hardcoded
     if isQuietHours():
         # check again in 30 minutes...this is kind of silly, but hey
-        print "*** Quiet hours are in effect (%d:00 to %d:00, currently: %d:00), calling again in 30 minutes..." % (QUIET_HOURS['start'], QUIET_HOURS['end'], datetime.now().hour)
+        print "*** Quiet hours are in effect (%d:00 to %d:00, currently: %d:00), calling again in 30 minutes..." % (
+            settings.SCHEDULER_QUIET_HOURS['start'],
+            settings.SCHEDULER_QUIET_HOURS['end'],
+            datetime.now().hour
+        )
         reactor.callLater(60*30, check_schedule)
         return
     
@@ -218,7 +170,7 @@ def check_schedule():
 
         d = agent.request(
             'POST',
-            TARGET_SERVER,
+            settings.SCHEDULER_TARGET_URL,
             Headers({
                     "Content-Type": ["application/x-www-form-urlencoded;charset=utf-8"],
                     "Content-Length": [str(len(payload))]
@@ -229,13 +181,9 @@ def check_schedule():
         d.addErrback(task_errored, sched_taskid=sched_task.id)
         
     # run again in a bit
-    reactor.callLater(CHECK_INTERVAL, check_schedule)
+    reactor.callLater(settings.SCHEDULER_CHECK_INTERVAL, check_schedule)
 
 def check_timeouts():
-    # the server we should poke, defined at the top of this file
-    global TARGET_TIMEOUT_SERVER
-    global CHECK_INTERVAL
-    
     sessions = Session.objects.get_timedout_sessions()
     
     for session in sessions:
@@ -252,7 +200,7 @@ def check_timeouts():
 
         d = agent.request(
             'POST',
-            TARGET_TIMEOUT_SERVER,
+            settings.SCHEDULER_TARGET_TIMEOUT_URL,
             Headers({
                     "Content-Type": ["application/x-www-form-urlencoded;charset=utf-8"],
                     "Content-Length": [str(len(payload))]
@@ -263,28 +211,19 @@ def check_timeouts():
         d.addErrback(session_timeout_errored, sessionid=session.id)
         
     # run again in a bit
-    reactor.callLater(CHECK_INTERVAL, check_timeouts)
+    reactor.callLater(settings.SCHEDULER_CHECK_INTERVAL, check_timeouts)
 
 
 # =========================================================================================
 # === twisted entrypoint and django command definitions
 # =========================================================================================
 
-def main(port=8080,noquiet=None):
-    global TARGET_SERVER, TARGET_TIMEOUT_SERVER
-    
-    # check params for quiet hours disabling setting
-    if noquiet:
-        global QUIET_HOURS
-        QUIET_HOURS = None
-        print "*** quiet hours have been disabled for this run"
-        
+def main(port=8080):        
     # construct the resource tree
     root = HTTPCommandBase()
     root.putChild('status', HTTPStatusCommand())
-    root.putChild('schedule', HTTPScheduleCommand())
 
-    print "-- Target URL: %s\n-- Target timeout URL: %s" % (TARGET_SERVER, TARGET_TIMEOUT_SERVER)
+    print "-- Target URL: %s\n-- Target timeout URL: %s" % (settings.SCHEDULER_TARGET_URL, settings.SCHEDULER_TARGET_TIMEOUT_URL)
 
     print "Running scheduler on port %d..." % (int(port))
     
@@ -299,8 +238,8 @@ if __name__ == '__main__':
 
 # to allow this to be executed as a django command...
 class Command(BaseCommand):
-    args = '<port> <noquiet>'
-    help = 'Runs the scheduler via twisted (weird, i know)'
+    args = '<port>'
+    help = 'Runs the scheduler via twisted'
 
     def handle(self, *args, **options):
         main(*args)
