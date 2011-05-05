@@ -155,17 +155,17 @@ class ProcessManager(models.Manager):
     def get_pending_processes(self):
         # a pending process has only incomplete scheduled tasks and no completed sessions
         qset = super(ProcessManager, self).get_query_set()
-        return qset.filter(taskinstance__state="pending").exclude(taskinstance__state="completed")
+        return qset.filter(taskinstance__status="pending").exclude(taskinstance__status="completed")
     
     def get_current_processes(self):
         # a current process has at least one incomplete session or scheduled task
         qset = super(ProcessManager, self).get_query_set()
-        return qset.filter(scheduledtask__state="running")
+        return qset.filter(Q(taskinstance__status="running")|Q(taskinstance__status="pending"))
     
     def get_completed_processes(self):
         # a completed process has only complete scheduled tasks and sessions
         qset = super(ProcessManager, self).get_query_set()
-        return qset.exclude(scheduledtask__completed=False).exclude(session__completed=False)
+        return qset.exclude(~Q(taskinstance__status="completed"))
 
     def reap_empty_processes(self):
         # removes any processes that have no referring instances
@@ -181,27 +181,21 @@ class Process(models.Model):
     objects = ProcessManager()
 
     def get_tasks(self):
-        return self.scheduledtask_set.all()
-
-    def get_sessions(self):
-        return self.session_set.all()
+        return self.taskinstance_set.all()
 
     def get_pending_tasks(self):
-        # a current process has at least one incomplete session
-        return self.scheduledtask_set.filter(completed=False)
+        return self.taskinstance_set.filter(status="pending")
     
-    def get_current_sessions(self):
-        # a current process has at least one incomplete session
-        return self.session_set.filter(completed=False)
+    def get_current_tasks(self):
+        return self.taskinstance_set.filter(status="running")
 
-    def get_completed_sessions(self):
-        # a current process has at least one incomplete session
-        return self.session_set.filter(completed=True)
+    def get_completed_tasks(self):
+        return self.session_set.filter(status="completed")
 
     def get_status(self):
         pending_cnt = self.get_pending_tasks().count()
-        current_cnt = self.get_current_sessions().count()
-        completed_cnt = self.get_completed_sessions().count()
+        current_cnt = self.get_current_tasks().count()
+        completed_cnt = self.get_completed_tasks().count()
         
         if pending_cnt > 0 and current_cnt <= 0 and completed_cnt <= 0: return "pending"
         elif (current_cnt) > 0 or (pending_cnt > 0 and completed_cnt > 0): return "running"
@@ -266,15 +260,21 @@ class TaskInstanceManager(models.Manager):
             )
         p.save()
 
-        t = TaskInstance(
-            patient=patient,
-            task=task,
-            mode=patient.contact_pref,
-            process=p,
-            params=params,
-            schedule_date=schedule_date
-            )
-        t.save()
+        try:
+            t = TaskInstance(
+                patient=patient,
+                task=task,
+                mode=patient.contact_pref,
+                process=p,
+                params=params,
+                schedule_date=schedule_date
+                )
+            t.save()
+        except:
+            # ensure we don't leave a phantom process around if there's a problem
+            p.delete()
+            # and continue the exception
+            raise
     
 class TaskInstance(models.Model):
     # core information
@@ -293,8 +293,9 @@ class TaskInstance(models.Model):
     )
 
     # current state of the task
-    state = models.CharField(max_length=100, default="pending", choices=STATUS_CHOICES)
+    status = models.CharField(max_length=100, default="pending", choices=STATUS_CHOICES)
     details = models.CharField(max_length=800,blank=True,null=True)
+    
     # state information for the task
     params = models.TextField(blank=True) # filled in from TaskTemplate, persistent
     context = models.TextField(blank=True) # managed by task, possibly non-persistent
@@ -315,36 +316,36 @@ class TaskInstance(models.Model):
         return self.logmessage_set.all()
 
     def mark_running(self):
-        self.state = "running"
+        self.status = "running"
         self.ran_date = datetime.now()
         self.save()
         
     def mark_errored(self, details):
-        self.state = "errored"
+        self.status = "errored"
         self.details = details
         self.errored_date = datetime.now()
         self.save()
         
     def mark_completed(self):
-        if self.state == "completed": return
-        self.state = "completed"
+        if self.status == "completed": return
+        self.status = "completed"
         self.completed_date = datetime.now()
         self.save()
         
     def is_pending(self):
-        return (self.schedule_date > datetime.now()) and (self.state == "pending")
+        return (self.schedule_date > datetime.now()) and (self.status == "pending")
 
     def is_due(self):
-        return (self.schedule_date <= datetime.now()) and (self.state == "pending")
+        return (self.schedule_date <= datetime.now()) and (self.status == "pending")
     
     def is_running(self):
-        return (self.state == "running")
+        return (self.status == "running")
     
     def is_past(self):
-        return (self.state == "completed")
+        return (self.status == "completed")
 
     def is_errored(self):
-        return (self.state == "errored")
+        return (self.status == "errored")
 
     def get_status(self):
         if self.is_pending(): return "pending"
@@ -355,10 +356,10 @@ class TaskInstance(models.Model):
 
     def spawn_task(self, task, update_params, schedule_date):
         """
-        Spawns a new task for the current patient. The task
-        will run on schedule_date, at which point it will be promoted
-        from the "pending" status to the "running" status and actually
-        begin execution of the machine associated with its Task.
+        Spawns a new task for the current patient based on this task.
+        The task will run on schedule_date, at which point it will be
+        promoted from the "pending" status to the "running" status and
+        actually begin execution of the machine associated with its Task.
 
         The new task will have the same process as the existing task,
         and its params will be the existing parameters updated by the

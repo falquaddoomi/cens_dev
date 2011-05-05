@@ -16,20 +16,20 @@
 
 		<div class="itemlist">
 			<table cellpadding="0" cellspacing="0" class="task_list" style="width: 100%;">
-				{% for task in pending_tasks %}
+				{% for instance in pending_tasks %}
 				<tr>
 					<td style="width: 60px; padding-right: 0px;">
-						<div class="task_status {{ task.get_status }}">{{ task.get_status }}</div>
+						<div class="task_status {{ task.get_status }}">{{ instance.get_status }}</div>
 					</td>
 
 					<td>
-					<b>{{ task.task.name }}</b>
-					<div class="subtext">scheduled for {{ task.schedule_date|date }}, {{ task.schedule_date|time }}</div>
-					{% if task.process %}<div class="subtext process_parent"><b>process:</b> {{ task.process }}</div>{% endif %}
+					<b>{{ instance.task.name }}</b>
+					<div class="subtext">scheduled for {{ instance.schedule_date|date }}, {{ instance.schedule_date|time }}</div>
+					<div class="subtext process_parent"><b>process:</b> {{ instance.process }}</div>
 					</td>
 
 					<td class="command" style="text-align: right;">
-						<a href="/taskmanager/tasks/{{ task.id }}/details/" rel="facebox">details</a>
+						<a href="/taskmanager/tasks/{{ instance.id }}/details/" rel="facebox">details</a>
 					</td>
 				</tr>
 				{% endfor %}
@@ -44,20 +44,20 @@
 
 		<div class="itemlist">
 			<table cellpadding="0" cellspacing="0" class="task_list" style="width: 100%;">
-				{% for session in current_sessions %}
+				{% for instance in current_tasks %}
 				<tr>
 					<td style="width: 60px; padding-right: 0px;">
 						<div class="task_status running">running</div>
 					</td>
 
 					<td>
-					<b>{{ session.task.name }}</b>
-					<div class="subtext">state: {{ session.state }}</div>
-					{% if session.process %}<div class="subtext process_parent"><b>process:</b> {{ session.process }}</div>{% endif %}
+					<b>{{ instance.task.name }}</b>
+					<div class="subtext">state: {{ instance.details }}</div>
+					<div class="subtext process_parent"><b>process:</b> {{ instance.process }}</div>
 					</td>
 
 					<td class="command" style="text-align: right;">
-						<a href="/taskmanager/sessions/{{ session.id }}/details/" rel="facebox">details</a>
+						<a href="/taskmanager/tasks/{{ instance.id }}/details/" rel="facebox">details</a>
 					</td>
 				</tr>
 				{% endfor %}
@@ -72,20 +72,20 @@
 
 		<div class="itemlist" style="border-right: none;">
 			<table cellpadding="0" cellspacing="0" class="task_list" style="width: 100%;">
-				{% for session in completed_sessions %}
+				{% for instance in completed_taks %}
 				<tr>
 					<td style="width: 60px; padding-right: 0px;">
 						<div class="task_status past">complete</div>
 					</td>
 
 					<td>
-					<b>{{ session.task.name }}</b>
-					<div class="subtext">completed on {{ session.completed_date|date }}, {{ session.completed_date|time }}</div>
-					{% if session.process %}<div class="subtext process_parent"><b>process:</b> {{ session.process }}</div>{% endif %}
+					<b>{{ instance.task.name }}</b>
+					<div class="subtext">completed on {{ instance.completed_date|date }}, {{ instance.completed_date|time }}</div>
+					<div class="subtext process_parent"><b>process:</b> {{ instance.process }}</div>
 					</td>
 
 					<td class="command" style="text-align: right;">
-						<a href="/taskmanager/sessions/{{ session.id }}/details/" rel="facebox">details</a>
+						<a href="/taskmanager/tasks/{{ instance.id }}/details/" rel="facebox">details</a>
 					</td>
 				</tr>
 				{% endfor %}

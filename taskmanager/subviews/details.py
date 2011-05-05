@@ -38,50 +38,32 @@ def process_command(request, processid):
     return process_details(request, processid)
 
 @csrf_protect
-def scheduledtask_details(request, taskid):
+def taskinstance_details(request, instanceid):
     context = {
-        'task': ScheduledTask.objects.get(pk=taskid)
+        'instance': TaskInstance.objects.get(pk=instanceid)
     }
-    return render_to_response('dashboard/details/scheduledtask.html', context, context_instance=RequestContext(request))
+    return render_to_response('dashboard/details/taskinstance.html', context, context_instance=RequestContext(request))
 
-
-def scheduledtask_command(request, taskid):
+def taskinstance_command(request, instanceid):
     if request.method == "POST" and request.is_ajax():
         command = request.POST.get('command')
-        task = ScheduledTask.objects.get(pk=taskid)
+        instance = TaskInstance.objects.get(pk=instanceid)
 
         # dispatch on different commands
         if command == "remove":
-            task.delete()
+            instance.delete()
             return HttpResponse("REQUIRES_REFRESH")
-
-        return HttpResponse("CMD_NOT_FOUND")
-
-    # and render the default view
-    return scheduledtask_details(request, taskid)
-
-@csrf_protect
-def session_details(request, sessionid):
-    context = {
-        'session': Session.objects.get(pk=sessionid)
-    }
-    return render_to_response('dashboard/details/session.html', context, context_instance=RequestContext(request))
-
-def session_command(request, sessionid):
-    if request.method == "POST" and request.is_ajax():
-        command = request.POST.get('command')
-        task = Session.objects.get(pk=sessionid)
-
+        
         # dispatch on different commands
         if command == "timeout":
-            session.timeout_date = datetime.now()
-            session.save()
+            instance.timeout_date = datetime.now()
+            instance.save()
             return HttpResponse("REQUIRES_REFRESH")
 
         return HttpResponse("CMD_NOT_FOUND")
 
     # and render the default view
-    return session_details(request, sessionid)
+    return taskinstance_details(request, instanceid)
 
 @csrf_protect
 def patient_details(request, patientid):

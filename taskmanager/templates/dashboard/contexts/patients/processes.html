@@ -54,11 +54,11 @@
 					{% with process.get_pending_tasks|length as pending_task_count %}{% if pending_task_count > 0 %}
 						<div class="subtext" style="color: #99963B;">{{ pending_task_count }} pending task{{ pending_task_count|pluralize }}</div>
 					{% endif %}{% endwith %}
-					{% with process.get_current_sessions|length as running_session_count %}{% if running_session_count > 0 %}
-						<div class="subtext" style="color: #3B7199;">{{ running_session_count }} running session{{ running_session_count|pluralize }}</div>
+					{% with process.get_current_tasks|length as running_task_count %}{% if running_task_count > 0 %}
+						<div class="subtext" style="color: #3B7199;">{{ running_task_count }} running task{{ running_task_count|pluralize }}</div>
 					{% endif %}{% endwith %}
-					{% with process.get_completed_sessions|length as completed_session_count %}{% if completed_session_count > 0 %}
-						<div class="subtext" style="color: #3a7;">{{ completed_session_count }} completed session{{ completed_session_count|pluralize }}</div>
+					{% with process.get_completed_tasks|length as completed_task_count %}{% if completed_task_count > 0 %}
+						<div class="subtext" style="color: #3a7;">{{ completed_task_count }} completed task{{ completed_task_count|pluralize }}</div>
 					{% endif %}{% endwith %}
 					</td>
 
@@ -86,8 +86,8 @@
 
 					<td>
 					<b>{{ process }}</b>
-					{% with process.get_completed_sessions|length as completed_session_count %}
-						<div class="subtext" style="margin-top: 3px; color: #3a7;">{{ completed_session_count }} completed session{{ completed_session_count|pluralize }}</div>
+					{% with process.get_completed_tasks|length as completed_task_count %}
+						<div class="subtext" style="margin-top: 3px; color: #3a7;">{{ completed_task_count }} completed task{{ completed_task_count|pluralize }}</div>
 					{% endwith %}
 					</td>
 
