@@ -312,7 +312,7 @@ class TaskInstance(models.Model):
     objects = TaskInstanceManager()
 
     def get_messages(self):
-        return self.sessionmessage_set.all()
+        return self.logmessage_set.all()
 
     def mark_running(self):
         self.state = "running"
@@ -385,14 +385,14 @@ class TaskInstance(models.Model):
     def __unicode__(self):
         return "Task Instance for %s on %s" % (self.patient.address, self.task.name)
 
-class SessionMessage(models.Model):
-    session = models.ForeignKey(TaskInstance)
+class LogMessage(models.Model):
+    instance = models.ForeignKey(TaskInstance)
     message = models.TextField()
     outgoing = models.BooleanField()
     add_date = models.DateTimeField(auto_now_add=True)
     
     def __unicode__(self):
         if self.outgoing:
-            return "Sent to %s: %s" % (self.session.patient.address, self.message)
+            return "Sent to %s: %s" % (self.instance.patient.address, self.message)
         else:
-            return "Received from %s: %s" % (self.session.patient.address, self.message)
+            return "Received from %s: %s" % (self.instance.patient.address, self.message)
