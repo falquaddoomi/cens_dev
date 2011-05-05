@@ -11,6 +11,7 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
 from taskmanager.models import *
+from django.db.models import Q
 
 from django.conf import settings
 
@@ -45,41 +46,41 @@ class HTTPStatusCommand(resource.Resource):
         
     def showJSONStatus(self, all_tasks=True):
         if all_tasks:
-            tasks = ScheduledTask.objects.all()
+            instances = TaskInstance.objects.all()
         else:
-            tasks = ScheduledTask.objects.get_pending_tasks()
+            instances = TaskInstance.objects.get_pending_tasks()
 
         # apply extra filtering and sorting, regardless of the source
-        tasks = tasks.filter(completed=False,active=True).order_by('-schedule_date')
+        instances = instances.order_by('-schedule_date')
 
         # stores the list of tasks that we'll be sending to the caller
         tasklist = []
 
-        for task in tasks:
+        for instance in instances:
             tasklist.append({
-                'id': task.id,
-                'target': task.task.name,
-                'arguments': json.loads(task.arguments),
-                'schedule_date': task.schedule_date.ctime(),
-                'completed': task.completed
+                'id': instance.id,
+                'target': instance.task.name,
+                'params': json.loads(instance.params),
+                'schedule_date': instance.schedule_date.ctime(),
+                'completed': (instance.status == "completed")
                 })
 
         return json.dumps({'status': ('running', 'sleeping')[isQuietHours()], 'tasks': tasklist})
     
     def showStatus(self, all_tasks=True):
         out = "<table>"
-        out += "<tr class='header'><td>ID</td><td>Target</td><td>Arguments</td><td>Schedule Date</td><td>Completed</td></tr>"
+        out += "<tr class='header'><td>ID</td><td>Target</td><td>Arguments</td><td>Schedule Date</td><td>Status</td></tr>"
         
         if all_tasks:
-            tasks = ScheduledTask.objects.all()
+            instances = TaskInstance.objects.all()
         else:
-            tasks = ScheduledTask.objects.get_pending_tasks()
+            instances = TaskInstance.objects.get_pending_tasks()
 
-        for task in tasks:
+        for instance in instances:
             out += '''
             <tr>
-                <td>%(id)s</td><td>%(target)s</td><td>%(arguments)s</td><td>%(schedule_date)s</td><td>%(completed)s</td>
-            </tr>''' % {'id': task.id, 'target': task.task.name, 'arguments': task.arguments, 'schedule_date': task.schedule_date, 'completed': task.completed}
+                <td>%(id)s</td><td>%(target)s</td><td>%(arguments)s</td><td>%(schedule_date)s</td><td>%(status)s</td>
+            </tr>''' % {'id': instance.id, 'target': instance.task.name, 'arguments': instance.params, 'schedule_date': instance.schedule_date, 'status': instance.status}
 
         return str('''
         <html>
@@ -103,28 +104,22 @@ class HTTPStatusCommand(resource.Resource):
 # === task database access methods
 # =========================================================================================
 
-def task_finished(response, sched_taskid):
-    t = ScheduledTask.objects.get(pk=sched_taskid)
-    t.completed = True
-    t.result = response.code
-    t.completed_date = datetime.now()
-    t.save()
-    print "- finished %s (%d) w/code %s" % (t.task.name, sched_taskid, str(response.code))
+def task_finished(response, instanceid):
+    print "- triggered %s (%d) w/code %s" % (t.task.name, sched_taskid, str(response.code))
 
-def task_errored(response, sched_taskid):
-    t = ScheduledTask.objects.get(pk=sched_taskid)
-    t.result = response.getErrorMessage()
-    t.save()
-    print "- errored out on task %s (%d), reason: %s" % (t.task.name, sched_taskid, response.getErrorMessage())
+def task_errored(response, instanceid):
+    t = ScheduledTask.objects.get(pk=instanceid)
+    # t.mark_errored(response.getErrorMessage()) # uncomment if you don't want the scheduler to retry on error
+    print "- errored out on task %s (%d), reason: %s...retrying soon" % (t.task.name, instanceid, response.getErrorMessage())
     response.printTraceback()
 
-def session_timeout_finished(response, sessionid):
-    t = Session.objects.get(pk=sessionid)
-    print "- timed out %s (%d) w/code %s" % (t.task.name, sessionid, str(response.code))
+def instance_timeout_finished(response, instanceid):
+    t = instance.objects.get(pk=instanceid)
+    print "- timed out %s (%d) w/code %s" % (t.task.name, instanceid, str(response.code))
 
-def session_timeout_errored(response, sessionid):
-    t = Session.objects.get(pk=sessionid)
-    print "- errored out on timing out %s (%d), reason: %s" % (t.task.name, sessionid, response.getErrorMessage())
+def instance_timeout_errored(response, instanceid):
+    t = instance.objects.get(pk=instanceid)
+    print "- errored out on timing out %s (%d), reason: %s" % (t.task.name, instanceid, response.getErrorMessage())
     response.printTraceback()
 
 
@@ -145,26 +140,21 @@ def check_schedule():
         reactor.callLater(60*30, check_schedule)
         return
     
-    tasks = ScheduledTask.objects.get_due_tasks()
+    instances = TaskInstance.objects.get_due_tasks()
     
-    for sched_task in tasks[0:1]:
+    for instance in instances[0:1]:
         agent = Agent(reactor)
 
         # ensure that the user is not halted -- if they are, we can't execute this task :\
-        if sched_task.patient.halted:
+        if instance.patient.halted:
             # print "ERROR: Cannot execute task: %s (%d), user is in the halt status" % (sched_task.task.name, sched_task.id)
             continue
         
-        print "Executing task: %s (%d)" % (sched_task.task.name, sched_task.id)
+        print "Executing task: %s (%d)" % (instance.task.name, instance.id)
 
         payload_dict = {
-            'patient': sched_task.patient.id,
-            'task': sched_task.task.id,
-            'arguments': json.dumps(sched_task.arguments)
+            'instanceid': instance.id
             }
-
-        if sched_task.process:
-            payload_dict['process'] = sched_task.process.id
 
         payload = urllib.urlencode(payload_dict)
 
@@ -177,23 +167,22 @@ def check_schedule():
                     }),
             StringProducer(payload))
 
-        d.addCallback(task_finished, sched_taskid=sched_task.id)
-        d.addErrback(task_errored, sched_taskid=sched_task.id)
+        d.addCallback(task_finished, instanceid=instance.id)
+        d.addErrback(task_errored, instanceid=instance.id)
         
     # run again in a bit
     reactor.callLater(settings.SCHEDULER_CHECK_INTERVAL, check_schedule)
 
 def check_timeouts():
-    sessions = Session.objects.get_timedout_sessions()
+    instances = TaskInstance.objects.get_timedout_tasks()
     
-    for session in sessions:
+    for instance in instances:
         agent = Agent(reactor)
         
-        print "Timing out session: %s (%d)" % (session.task.name, session.id)
+        print "Timing out instance: %s (%d)" % (instance.task.name, instance.id)
 
         payload_dict = {
-            'patient': session.patient.id,
-            'session': session.id
+            'instance': instance.id
             }
 
         payload = urllib.urlencode(payload_dict)
@@ -207,8 +196,8 @@ def check_timeouts():
                     }),
             StringProducer(payload))
 
-        d.addCallback(session_timeout_finished, sessionid=session.id)
-        d.addErrback(session_timeout_errored, sessionid=session.id)
+        d.addCallback(instance_timeout_finished, instanceid=instance.id)
+        d.addErrback(instance_timeout_errored, instanceid=instance.id)
         
     # run again in a bit
     reactor.callLater(settings.SCHEDULER_CHECK_INTERVAL, check_timeouts)
