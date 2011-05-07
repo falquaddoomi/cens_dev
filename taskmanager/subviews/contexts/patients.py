@@ -186,7 +186,7 @@ def default(request):
     return render_to_response('dashboard/contexts/patients/main.html', field_vars, context_instance=RequestContext(request))
 
 # =================================================================
-# ==== Forms for adding Users, ScheduledTasks, Processes
+# ==== Forms for adding Users, TaskInstances, Processes
 # =================================================================
 
 from django import forms
@@ -226,7 +226,7 @@ def add_scheduled_task(request):
             patient = Patient.objects.get(pk=int(request.POST['patient'])),
             task = template.task,
             schedule_date = parsed_datetime,
-            params = template.arguments
+            params = template.arguments,
             creator = request.user.get_profile(),
             name = template.name)
 
@@ -269,7 +269,7 @@ def add_scheduled_process(request):
             patient = patient,
             task = template.task,
             schedule_date = parsed_datetime,
-            params = json.dumps(combined_args)
+            params = json.dumps(combined_args),
             creator = request.user.get_profile(),
             name = template.name)
 

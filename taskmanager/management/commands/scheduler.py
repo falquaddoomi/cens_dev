@@ -105,10 +105,11 @@ class HTTPStatusCommand(resource.Resource):
 # =========================================================================================
 
 def task_finished(response, instanceid):
-    print "- triggered %s (%d) w/code %s" % (t.task.name, sched_taskid, str(response.code))
+    t = TaskInstance.objects.get(pk=instanceid)
+    print "- triggered %s (%d) w/code %s" % (t.task.name, instanceid, str(response.code))
 
 def task_errored(response, instanceid):
-    t = ScheduledTask.objects.get(pk=instanceid)
+    t = TaskInstance.objects.get(pk=instanceid)
     # t.mark_errored(response.getErrorMessage()) # uncomment if you don't want the scheduler to retry on error
     print "- errored out on task %s (%d), reason: %s...retrying soon" % (t.task.name, instanceid, response.getErrorMessage())
     response.printTraceback()
@@ -160,7 +161,7 @@ def check_schedule():
 
         d = agent.request(
             'POST',
-            settings.SCHEDULER_TARGET_URL,
+            urlparse.urljoin(settings.SCHEDULER_TARGET_URL, "exec"),
             Headers({
                     "Content-Type": ["application/x-www-form-urlencoded;charset=utf-8"],
                     "Content-Length": [str(len(payload))]
@@ -189,7 +190,7 @@ def check_timeouts():
 
         d = agent.request(
             'POST',
-            settings.SCHEDULER_TARGET_TIMEOUT_URL,
+            urlparse.urljoin(settings.SCHEDULER_TARGET_URL, "timeout"),
             Headers({
                     "Content-Type": ["application/x-www-form-urlencoded;charset=utf-8"],
                     "Content-Length": [str(len(payload))]
@@ -212,7 +213,7 @@ def main(port=8080):
     root = HTTPCommandBase()
     root.putChild('status', HTTPStatusCommand())
 
-    print "-- Target URL: %s\n-- Target timeout URL: %s" % (settings.SCHEDULER_TARGET_URL, settings.SCHEDULER_TARGET_TIMEOUT_URL)
+    print "-- Target URL: %s" % (settings.SCHEDULER_TARGET_URL)
 
     print "Running scheduler on port %d..." % (int(port))
     

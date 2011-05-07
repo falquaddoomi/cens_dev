@@ -148,7 +148,7 @@ class TaskTemplate(models.Model):
         return "%s" % (self.name)
 
 # =================================================================
-# ==== Processes (Scheduled Task + Session aggregation)
+# ==== Processes (Task Instance aggregation)
 # =================================================================
 
 class ProcessManager(models.Manager):
@@ -190,7 +190,7 @@ class Process(models.Model):
         return self.taskinstance_set.filter(status="running")
 
     def get_completed_tasks(self):
-        return self.session_set.filter(status="completed")
+        return self.taskinstance_set.filter(status="completed")
 
     def get_status(self):
         pending_cnt = self.get_pending_tasks().count()

@@ -11,21 +11,11 @@ import json
 from django.db.models import Count
 
 from rapidsms.log.mixin import LoggerMixin
-from taskmanager.models import Patient, Task, Process, Session, SessionMessage
+from taskmanager.models import Patient, Task, Process, TaskInstance, LogMessage
 from taskmanager.tasks.base import BaseTask, TaskCompleteException
 from utilities import KeepRefs
 
 class TaskDispatcher(KeepRefs, LoggerMixin):
-    @classmethod
-    def _outer_session_removed(*args, **kwargs):
-        # called right before a Session model is deleted
-        # notify all of our dispatchers (usually just one)
-        # that a session was removed
-        instance = kwargs['instance']
-        print "Removing task ID %d due to session #%d being removed" % (instance.id, instance.id)
-        for dispatcher in TaskDispatcher.get_instances():
-            dispatcher.removetask(instance)
-    
     def __init__(self, app):
         # dict of active session machines, keyed by session id
         # the user provides two pieces of information that will help
@@ -38,9 +28,9 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
         self.dispatch = {}
 
         # kill all current sessions, since our dispatch is empty at start
-        Session.objects.get_current_sessions().delete()
+        TaskInstance.objects.get_running_tasks().delete()
         # and kill all the resulting hollow processes
-        Process.objects.annotate(num_sessions=Count('session')).filter(num_sessions=0).delete()
+        Process.objects.reap_empty_processes()
         
         # a reference to the app, so we can send messages to the user
         # w/o first receiving a message
@@ -61,29 +51,29 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
                 self.machines[task.id] = getattr(_module, task.className)
                 self.info("Loaded class %s from module %s into machines w/ID %d" % (task.className, task.module, task.id))
             except:
+                raise
                 self.info("Unable to load class %s from module %s, continuing..." % (task.className, task.module))
 
-    def _log(self, session, text, outgoing):
-        entry = SessionMessage(session=session, message=text, outgoing=outgoing)
+    def _log(self, instance, text, outgoing):
+        entry = LogMessage(instance=instance, message=text, outgoing=outgoing)
         entry.save()
                 
-    def exectask(self, task, patient, process, args):
+    def execute(self, instance):
         # the app calls this when a request to start a task
         # has been received from the scheduler.
         # all we have to do is load the task, start it,
         # and add it to the dispatch table so that we can
         # later route messages + timeouts to it
 
-        # create a session and throw a handle to it into the tasks table
-        session = Session(patient=patient, task=task, mode=patient.contact_pref, process=process)
-        session.save()
-
+        # promote the instance to 'running'
+        instance.mark_running()
+        
         # create a new machine instance which we'll use to handle the interaction
-        machine = self.machines[task.id](self.app, patient, session, args)
+        machine = self.machines[instance.task.id](self.app, instance)
         
         # add the new session/machine to the dispatch so we can route messages to it later
-        self.dispatch[session.id] = {
-            'session': session,
+        self.dispatch[instance.id] = {
+            'instance': instance,
             'machine': machine
             }
 
@@ -92,16 +82,11 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
             machine.start()
         except TaskCompleteException:
             # remove it from the list as soon as it was born :\
-            del self.dispatch[session.id]
-            # and mark the session complete
-            session.mark_complete()
+            del self.dispatch[instance.id]
+            # and mark the instance complete
+            instance.mark_completed()
     
         return True # i guess this means it succeeded? perhaps we shouldn't return anything
-
-    def removetask(self, session):
-        # remove the task from the dispatch, if it exists
-        if session.id in self.dispatch:
-            del self.dispatch[session.id]
 
     def handle(self, msg):
         # determine which of our tasks, if any, should
@@ -130,12 +115,15 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
             msg.respond(e.message)
             return False
 
+        # we're a prefix-matching dispatch, so let's strip off the prefix
+        
+
         # now that we ostensibly know the patient, enumerate their sessions
-        for session in Session.objects.get_current_sessions().filter(patient=patient):
+        for instance in TaskInstance.objects.get_running_tasks().filter(patient=patient):
             # invoke the machine associated with this session's handler
             # if it returns true, we're done, otherwise go through all the other sessions, i guess :\
             try:
-                if session.id in self.dispatch and self.dispatch[session.id]['machine'].handle(msg):
+                if instance.id in self.dispatch and self.dispatch[instance.id]['machine'].handle(msg):
                     # we handled it, stop looking for new ones
                     return True
                 else:
@@ -146,20 +134,58 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
             except TaskCompleteException:
                 # this must've been raised from the machine's handle() event
                 # the machine is finished, remove it from the list
-                del self.dispatch[session.id]
+                del self.dispatch[instance.id]
                 # and mark the session complete
-                session.mark_complete()
+                instance.mark_completed()
                 return True
 
         # no task matched! we should probably just tell them that they don't have any existing tasks...
         msg.respond("You have no running tasks right now")
         return True
 
+    def timeout(self, instance):
+        # the App has told us that we have a task that's timed out, so let's give it a poke
+        try:
+            if instance.id in self.dispatch:
+                # clear the timeout
+                instance.timeout_date = None
+                instance.save()
+                # poke the task
+                self.dispatch[instance.id]['machine'].timeout()
+                # and tell them everything's ok?
+                return True
+            else:
+                # should we just silently ignore this?
+                self.debug("Attempted to invoke timeout on instance ID %d, but could not find an associated machine in the dispatch" % (instance.id))
+                pass
+        except TaskCompleteException:
+            # this must've been raised from the machine's timeout() event
+            # the machine is finished, remove it from the list
+            del self.dispatch[instance.id]
+            # and mark the session complete
+            instance.mark_completed()
+            return True
+
+    def removetask(self, instance):
+        # remove the task from the dispatch, if it exists
+        if instance.id in self.dispatch:
+            del self.dispatch[instance.id]
+            
+    @classmethod
+    def _outer_session_removed(*args, **kwargs):
+        # called right before a TaskInstance model is deleted
+        # notify all of our dispatchers (usually just one)
+        # that a session was removed
+        instance = kwargs['instance']
+        print "Removing task ID %d due to session #%d being removed" % (instance.id, instance.id)
+        for dispatcher in TaskDispatcher.get_instances():
+            dispatcher.removetask(instance)
+
 # =============================================================
 # === signal handlers and other miscellanea below...
 # =============================================================
 
-# allow us to be notified of any changes to the Sessions table
+# allow us to be notified of any changes to the TaskInstance table
 # so that we can clean up our associated instances, etc.
 from django.db.models.signals import pre_delete
-pre_delete.connect(TaskDispatcher._outer_session_removed, sender=Session)
+pre_delete.connect(TaskDispatcher._outer_session_removed, sender=TaskInstance)

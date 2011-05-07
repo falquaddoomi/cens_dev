@@ -2,19 +2,20 @@ import sys, os.path
 import json, re
 from lxml import etree
 from parsedatetime import parsedatetime
+from datetime import datetime
 
 from django.template.loader import Template, Context
 
 from base import BaseTask, TaskCompleteException
-from taskmanager.models import SessionMessage
+from taskmanager.models import LogMessage
 
 class BaseXmlTask(BaseTask):
-    def __init__(self, app, patient, session, args=None):
-        super(BaseXmlTask, self).__init__(app, patient, session, args)
+    def __init__(self, app, instance):
+        super(BaseXmlTask, self).__init__(app, instance)
 
         # we need a script file from the arguments,
         # so ensure it's there before we begin
-        if "script" not in args:
+        if "script" not in self.params:
             raise Exception("attempted to instantiate BaseXmlTask without 'script' in the arguments collection")
 
         # create a little queue that stores action items for the current level of scope.
@@ -25,10 +26,10 @@ class BaseXmlTask(BaseTask):
         self.conditions = []
 
     def start(self):
-        print "Beginning execution of %s!" % (self.args['script'])
+        print "Beginning execution of %s!" % (self.params['script'])
         
         # read the first-level element (ostensibly interaction)
-        self.tree = etree.parse(os.path.join(os.path.dirname(__file__), "scripts", self.args['script']))
+        self.tree = etree.parse(os.path.join(os.path.dirname(__file__), "scripts", self.params['script']))
         interaction = self.tree.getroot()
         # grab some top-level params which apply to the entire task
         self.prefixes = [interaction.get("prefix")]
@@ -45,7 +46,7 @@ class BaseXmlTask(BaseTask):
             # determine if the condition applies to the current message
             if condition.satisfied(msg=message):
                 # log it!
-                SessionMessage(session=self.session, message=message.text, outgoing=False).save()
+                LogMessage(instance=self.instance, message=message.text, outgoing=False).save()
                 # and expand the node associated with this condition
                 self._exec_children(condition.node, condition.context)
                 return True
@@ -58,8 +59,8 @@ class BaseXmlTask(BaseTask):
 
     def send(self, message):
         # little helper for sending and logging messages
-        SessionMessage(session=self.session, message=message, outgoing=True).save()
-        self.app.send(self.patient.get_address(), message, identityType=self.session.mode)
+        LogMessage(instance=self.instance, message=message, outgoing=True).save()
+        self.app.send(self.instance.patient.get_address(), message, identityType=self.instance.mode)
 
     # ----------------------------------------------------
     # --- dealing with node behaviors below
@@ -76,7 +77,7 @@ class BaseXmlTask(BaseTask):
         
         # construct a default context for this evaluation
         # and add any parent context info to the dict
-        default_context = Context({'patient': self.patient, 'args': self.args})
+        default_context = Context({'patient': self.instance.patient, 'params': self.params})
         if context: default_context.update(context)
 
         # execute all top-level elements
@@ -172,4 +173,7 @@ class TimeoutCondition(Condition):
     def __init__(self, node, triggertime):
         super(TimeoutCondition, self).__init__(node)
         self.context['triggertime'] = triggertime
-        self.triggertime = re.compile(self.context['pattern'])
+        self.triggertime = node.attr['duration']
+
+    def satisfied(self, **kwargs):
+        return self.triggertime >= datetime.now()

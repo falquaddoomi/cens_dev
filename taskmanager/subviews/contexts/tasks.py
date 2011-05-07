@@ -76,7 +76,7 @@ def default(request):
     return render_to_response('dashboard/contexts/tasks/main.html', field_vars, context_instance=RequestContext(request))
 
 # =================================================================
-# ==== Forms for adding Users, ScheduledTasks, Processes
+# ==== Forms for adding stuff
 # =================================================================
 
 from django import forms
