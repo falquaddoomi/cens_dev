@@ -54,10 +54,10 @@ INSTALLED_BACKENDS = {
         "ENGINE":  "rapidsms.backends.clickatell", 
         "port": 8005,
         "gateway_url": "http://api.clickatell.com/http/sendmsg",
-        "api_id": "",
-        "username": "<clickatell username here>",
-        "password": "<clickatell password here>",
-        "phone_no": "<clickatell phone no here>"
+        "api_id": "<clickatell api key>",
+        "username": "<clickatell username>",
+        "password": "<clickatell password>",
+        "phone_no": "<clickatell number>"
     }
 }
 
@@ -243,6 +243,7 @@ import rapidsms.contrib.ajax.settings
 rapidsms.contrib.ajax.settings.AJAX_PROXY_PORT = 8012
 
 # scheduler settings, reliant on the port defined above
-SCHEDULER_TARGET_URL = 'http://localhost:%d/taskmanager' % (rapidsms.contrib.ajax.settings.AJAX_PROXY_PORT)
-SCHEDULER_QUIET_HOURS = {'start': 22, 'end': 8}
+SCHEDULER_TARGET_URL = 'http://localhost:%d/taskmanager/' % (rapidsms.contrib.ajax.settings.AJAX_PROXY_PORT)
+# SCHEDULER_QUIET_HOURS = {'start': 22, 'end': 8}
+SCHEDULER_QUIET_HOURS = None # disables quiet hours
 SCHEDULER_CHECK_INTERVAL = 15 # time in seconds between polls of the database
