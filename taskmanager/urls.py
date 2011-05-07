@@ -2,7 +2,9 @@
 # vim: ai ts=4 sts=4 et sw=4
 
 from django.conf.urls.defaults import *
+
 import taskmanager.views as views
+
 import taskmanager.subviews.login as login
 import taskmanager.subviews.dashboard as dashboard
 import taskmanager.subviews.details as details
