@@ -38,3 +38,29 @@ class KeepRefs(object):
             inst = inst_ref()
             if inst is not None:
                 yield inst
+
+# random date-parsing routines to make my life easier
+from datetime import datetime
+from parsedatetime import parsedatetime
+
+def parsedt(datestr, offset=None, verify_complete=False):
+    """
+    Parses 'datestr' as a date using the parsedatetime library.
+
+    If offset is specified, the date is computed relative to that date (e.g.
+    'in 7 days' will be interpreted relative to the offset date). If an offset
+    is not specified, it defaults to the current date and time.
+
+    If verify_complete is True, 'instr' must result in a date AND time, otherwise
+    a ValueError exception is raised.
+    """
+
+    pdt = parsedatetime.Calendar()
+    (result, retval) = pdt.parse(datestr, offset)
+
+    print "result: %s, retval: %d" % (result, retval)
+
+    if verify_complete and (retval < 2):
+        raise ValueError("Could not parse '%s' as both a date and time (result: %d)" % (datestr, retval))
+    
+    return datetime(*result[0:7])

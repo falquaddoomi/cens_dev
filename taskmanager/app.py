@@ -24,14 +24,9 @@ class App(rapidsms.apps.base.AppBase):
     def start(self):
         self.debug("TaskManager App :: start() invoked, beginning...")
 
-        # this would be a good time to load up the task classes
-        # so that they can be instantiated as requests come in.
-        # i imagine that this will be part of the Task Executor.
-        
-        # it'd also be a good time to set up the structure that will
-        # store users' state with the system, although this may be
-        # better moved into the db so the system can restart without issue.
-        # this would normally be part of the Task Dispatcher.
+        # create our default dispatcher
+        # it uses the identity of the incoming message + a message prefix
+        # to route messages to the list of taskinstances/machines it maintains
         self.dispatch = dispatcher.TaskDispatcher(self)
 
     def handle(self, message):
@@ -66,41 +61,18 @@ class App(rapidsms.apps.base.AppBase):
 
     def ajax_POST_exec(self, getargs, postargs=None):
         # we've received a request from the scheduler
-        # to invoke a task for some given user.
-        # first, we have to unpack the data.
-        task = Task.objects.get(pk=postargs['task'])
-        patient = Patient.objects.get(pk=postargs['patient'])
-        args = eval(json.loads(postargs['arguments']))
-
-        # determine if the task has an associated process.
-        # we'll have to pass that into the task instance's constructor
-        # so that it's aware of its sibling tasks in the process, can
-        # log messages under the process, etc.
-        # FIXME: logging should somehow be handled by the framework...think about this.
-        if 'process' in postargs:
-            process = Process.objects.get(pk=postargs['process'])
-        else:
-            process = None
-
-        # we now need to do three things:
-        # 1) instantiate an instance of the task class
-        # 2) fire the instantiated task's start() method
-        # 3) determine how to route future messages that may be intended for this task (???)
-
-        # try:
-        self.dispatch.exectask(task, patient, process, args)
+        # to promote a task to the running status
+        instance = TaskInstance.objects.get(pk=postargs['instanceid'])
+        self.dispatch.execute(instance)
         return {'status': 'OK'}
-        # except:
-        #    return {'status': 'ERROR'}
 
     def ajax_POST_timeout(self, getargs, postargs=None):
         # sent from the scheduler to 'poke' a running task into taking some action.
         # this is usually a result of the user not responding quickly enough to a message.
         # common things the task might do: resend the original message, silently stop,
         # schedule other reminders, post administrative alerts, etc.
-        patient = Patient.objects.get(pk=postargs['patient'])
-        session = Session.objects.get(pk=postargs['session'])
-
+        instance = TaskInstance.objects.get(pk=postargs['instanceid'])
+        self.dispatch.timeout(instance)
         return {'status': 'OK'}
 
 

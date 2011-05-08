@@ -53,9 +53,9 @@ def tasks(request, patientid):
     field_vars = {
         'section': 'tasks',
         'tasktemplates': TaskTemplate.objects.all(),
-        'pending_tasks': ScheduledTask.objects.filter(patient__id=patientid,completed=False).order_by('schedule_date'),
-        'current_sessions': Session.objects.get_current_sessions().filter(patient__id=patientid).order_by('add_date'),
-        'completed_sessions': Session.objects.get_completed_sessions().filter(patient__id=patientid).order_by('add_date'),
+        'pending_tasks': TaskInstance.objects.get_pending_tasks().filter(patient__id=patientid).order_by('schedule_date'),
+        'current_tasks': TaskInstance.objects.get_current_tasks().filter(patient__id=patientid).order_by('add_date'),
+        'completed_tasks': TaskInstance.objects.get_completed_tasks().filter(patient__id=patientid).order_by('add_date'),
         }
     
     merge_contextuals(field_vars, request, patientid)
@@ -169,7 +169,7 @@ def calendar(request, patientid):
         'section': 'calendar',
         'patient': Patient.objects.get(pk=patientid),
         'processes': Process.objects.filter(patient__id=patientid),
-        'tasks':  ScheduledTask.objects.filter(patient__id=patientid)
+        'tasks':  TaskInstance.objects.filter(patient__id=patientid)
         }
     
     merge_contextuals(field_vars, request, patientid)
@@ -186,7 +186,7 @@ def default(request):
     return render_to_response('dashboard/contexts/patients/main.html', field_vars, context_instance=RequestContext(request))
 
 # =================================================================
-# ==== Forms for adding Users, ScheduledTasks, Processes
+# ==== Forms for adding Users, TaskInstances, Processes
 # =================================================================
 
 from django import forms
@@ -221,14 +221,14 @@ def add_scheduled_task(request):
         p = pdt.Calendar()
         parsed_date = p.parse(request.POST['scheduled_date'] + " " + request.POST['scheduled_time'])
         parsed_datetime = datetime.fromtimestamp(time.mktime(parsed_date[0]))
-        
-        nt = ScheduledTask(
+
+        TaskInstance.objects.create_task(
             patient = Patient.objects.get(pk=int(request.POST['patient'])),
             task = template.task,
             schedule_date = parsed_datetime,
-            arguments = template.arguments
-            )
-        nt.save()
+            params = template.arguments,
+            creator = request.user.get_profile(),
+            name = template.name)
 
         # return HttpResponseRedirect(reverse('taskmanager.views.scheduler'))
         return HttpResponseRedirect(request.POST['return_page'])
@@ -264,28 +264,14 @@ def add_scheduled_process(request):
         for k in filter(lambda x: str(combined_args[x]).startswith("?"), combined_args):
             del combined_args[k]
 
-        # create a Process under which to group these tasks
-        np = Process(
-            name=template.name,
-            creator=request.user.get_profile(),
-            patient=patient
-            )
-        np.save()
-
-        try:
-            nt = ScheduledTask(
-                patient = patient,
-                task = template.task,
-                process = np,
-                schedule_date = parsed_datetime,
-                arguments = json.dumps(combined_args)
-            )
-            nt.save()
-        except:
-            # remove the process we just added
-            np.delete()
-            # and continue the exception
-            raise
+        # create and schedule the process/task
+        TaskInstance.objects.create_task(
+            patient = patient,
+            task = template.task,
+            schedule_date = parsed_datetime,
+            params = json.dumps(combined_args),
+            creator = request.user.get_profile(),
+            name = template.name)
 
         # return HttpResponseRedirect(reverse('taskmanager.views.scheduler'))
         return HttpResponseRedirect(request.POST['return_page'])

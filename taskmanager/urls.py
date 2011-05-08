@@ -2,7 +2,9 @@
 # vim: ai ts=4 sts=4 et sw=4
 
 from django.conf.urls.defaults import *
+
 import taskmanager.views as views
+
 import taskmanager.subviews.login as login
 import taskmanager.subviews.dashboard as dashboard
 import taskmanager.subviews.details as details
@@ -61,21 +63,14 @@ urlpatterns = patterns('',
     # ================================
     # details views
     # ================================
-    (r'^processes/(?P<processid>\d+)/details/?$', details.process_details),
-    (r'^tasks/(?P<taskid>\d+)/details/?$', details.scheduledtask_details),
-    (r'^sessions/(?P<sessionid>\d+)/details/?$', details.session_details),
     (r'^patients/(?P<patientid>\d+)/details/?$', details.patient_details),
+    (r'^processes/(?P<processid>\d+)/details/?$', details.process_details),
+    (r'^tasks/(?P<instanceid>\d+)/details/?$', details.taskinstance_details),
 
     # detail view commands
     (r'^patients/(?P<patientid>\d+)/command/?$', details.patient_command),
     (r'^processes/(?P<processid>\d+)/command/?$', details.process_command),
-    (r'^tasks/(?P<taskid>\d+)/command/?$', details.scheduledtask_command),
-    (r'^sessions/(?P<sessionid>\d+)/command/?$', details.session_command),
-
-    # legacy scheduler views                   
-    (r'^scheduler/?$', views.scheduler),
-    (r'^scheduler/add/?$', views.add_scheduled_task),
-    (r'^scheduler/check_service$', views.check_scheduler),
+    (r'^tasks/(?P<instanceid>\d+)/command/?$', details.taskinstance_command),
 
     # AJAX proxy
     (r'^proxy/(?P<url>.+)$', views.proxy),

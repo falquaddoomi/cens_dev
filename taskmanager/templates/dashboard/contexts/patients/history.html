@@ -64,28 +64,28 @@ $(document).ready(function() {
 							</a>
 						</div>
 
-						{% for session in process.get_sessions %}
-						<div class="history_item {{ session.get_status }}_light">
+						{% for instance in process.get_tasks %}
+						<div class="history_item {{ instance.get_status }}_light">
 							<div class="history_session_header">
-								<a id="session_{{ session.id }}" name="session_{{ session.id }}" href="/taskmanager/sessions/{{ session.id }}/details/" class="history_task_link" rel="facebox">
-									<b>{{ session.task.name }}</b>
-									<span class="history_session_date">ran on {{ session.add_date|date }}, {{ session.add_date|time }}</span>
+								<a id="session_{{ instance.id }}" name="session_{{ instance.id }}" href="/taskmanager/tasks/{{ instance.id }}/details/" class="history_task_link" rel="facebox">
+									<b>{{ instance.task.name }}</b>
+									<span class="history_session_date">ran on {{ instance.ran_date|date }}, {{ instance.ran_date|time }}</span>
 								</a>
 							</div>
 
 							<table class="history_msg_table">
-							{% for message in session.get_messages %}
+							{% for message in instance.get_messages %}
 								<tr class="history_msg {{ message.outgoing|yesno:'incoming,outgoing' }}"">
 									<td class="msg_label"><b>{{ message.outgoing|yesno:"system:,client:" }}</b></td>
 									<td class="msg_data">{{ message.message }}</td>
 								</tr>
 							{% endfor %}
 
-							{% if not session.completed and session.state %}
+							{% if instance.status != "completed" and instance.details %}
 								<tr class="state_msg"">
 									<td class="msg_label"><b>state:</b></td>
 									<td class="msg_data">
-									<b>{{ session.state }}</b>{% if not session.completed and session.timeout_date %} (times out in <b>{{ session.timeout_date|timeuntil }}</b>){% endif %}
+									<b>{{ instance.details }}</b>{% if instance.status != "completed" and instance.timeout_date %} (times out in <b>{{ instance.timeout_date|timeuntil }}</b>){% endif %}
 									</td>
 								</tr>
 							{% endif %}
@@ -96,10 +96,10 @@ $(document).ready(function() {
 						{% with process.get_pending_tasks as pending_tasks %}
 						{% if pending_tasks %}
 							<div style="overflow: auto; width: 100%;">
-								{% for sched_task in pending_tasks %}
-								<a href="/taskmanager/tasks/{{ sched_task.id }}/details/" class="history_task_link" rel="facebox">
-									<div class="history_task {{ sched_task.get_status }}_light">
-										<b>{{ sched_task.task.name }}</b> on {{ sched_task.schedule_date|date }}, {{ sched_task.schedule_date|time }}
+								{% for instance in pending_tasks %}
+								<a href="/taskmanager/tasks/{{ instance.id }}/details/" class="history_task_link" rel="facebox">
+									<div class="history_task {{ instance.get_status }}_light">
+										<b>{{ instance.task.name }}</b> on {{ instance.schedule_date|date }}, {{ instance.schedule_date|time }}
 									</div>
 								</a>
 								{% endfor %}

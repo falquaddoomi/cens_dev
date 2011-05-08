@@ -1,3 +1,4 @@
+import json
 
 # signifies that our task is done to the dispatcher
 # the dispatch should remove us when it receives this
@@ -9,23 +10,22 @@ class BaseTask(object):
     Provides a set of handlers that tasks should override. All tasks must inherit from this base class.
     """
     
-    def __init__(self, app, patient, session, args=None):
+    def __init__(self, app, instance):
         self.app = app
-        self.patient = patient
-        self.session = session
-        self.args = args
-        self.prefies = []
+        self.instance = instance
+        self.params = json.loads(instance.params)
+        self.prefix = ""
 
-    def prefixes(self):
+    def get_prefix(self):
         """
-        Returns a prefix (or list of them) which can be used to activate this task. Necessary
+        Returns a prefix which can be used to activate this task. Necessary
         for demultiplexing different kinds of running tasks from each other.
 
-        Incoming messages will have their first word compared against the list of prefixes
+        Incoming messages will have their first word compared against the prefix
         for each running task; the first matching task will have handle() called on it,
         proceeding through each matching task and ending when one returns True.
         """
-        return self.prefixes
+        return self.prefix
 
     def start(self):
         """
