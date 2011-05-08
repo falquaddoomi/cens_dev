@@ -27,9 +27,10 @@ urlpatterns = patterns('',
     (r'^registration/', include('rapidsms.contrib.registration.urls')),
     (r'^scheduler/', include('rapidsms.contrib.scheduler.urls')),
 
-    # user-level apps!
+    # user-level apps
     (r'^linearize/', include('cens_dev.linearize.urls')),
     (r'^taskmanager/', include('cens_dev.taskmanager.urls')),
+    (r'^ASAP/', include('cens_dev.ASAP.urls')),
 )
 
 if settings.DEBUG:

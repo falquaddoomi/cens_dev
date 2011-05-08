@@ -40,13 +40,13 @@ def signupform(request):
     else:
         form = ASAPParticipantForm() # An unbound form
 
-    return render_to_response('ASAP/signup.html', {
+    return render_to_response('signup.html', {
         'form': form,
         'goal_categories': ASAPGoalCategory.objects.all()
     }, context_instance=RequestContext(request))
 
 def thanks(request):
-    return render_to_response('ASAP/thanks.html', {}, context_instance=RequestContext(request))
+    return render_to_response('thanks.html', {}, context_instance=RequestContext(request))
 
 # =============================================
 # ASAP has a few models it needs to run, detailed here
