@@ -1,4 +1,4 @@
-screen -d -m -S cens_dev -t sched_dev sh -c 'cd ~/checkouts/dev/cens_dev; ./manage.py scheduler 8082 noquiet;'
+screen -d -m -S cens_dev -t sched_dev sh -c 'cd ~/checkouts/dev/cens_dev; ./manage.py scheduler 8082;'
 screen -S cens_dev -X zombie qr
 screen -S cens_dev -X screen -t route_dev sh -c 'cd ~/checkouts/dev/cens_dev; ./manage.py runrouter;'
 screen -S cens_dev -X screen -t web_dev sh -c 'cd ~/checkouts/dev/cens_dev; ./manage.py runserver 0.0.0.0:8004;'
