@@ -153,14 +153,17 @@ class TaskTemplate(models.Model):
 
 class ProcessManager(models.Manager):
     def get_pending_processes(self):
-        # a pending process has only incomplete scheduled tasks and no completed sessions
+        # a pending process has only pending tasks
         qset = super(ProcessManager, self).get_query_set()
-        return qset.filter(taskinstance__status="pending").exclude(taskinstance__status="completed")
+        return qset.filter(taskinstance__status="pending")
     
     def get_current_processes(self):
-        # a current process has at least one incomplete session or scheduled task
+        # a current process has at least one running task, or a combination of pending and complete tasks
         qset = super(ProcessManager, self).get_query_set()
-        return qset.filter(Q(taskinstance__status="running")|Q(taskinstance__status="pending"))
+        return qset.filter(
+            Q(taskinstance__status="running")|
+            (Q(taskinstance__status="pending") & Q(taskinstance__status="completed"))
+            )
     
     def get_completed_processes(self):
         # a completed process has only complete scheduled tasks and sessions
@@ -262,6 +265,7 @@ class TaskInstanceManager(models.Manager):
 
         try:
             t = TaskInstance(
+                name=(name if name is not None else task.name),
                 patient=patient,
                 task=task,
                 mode=patient.contact_pref,
@@ -278,6 +282,7 @@ class TaskInstanceManager(models.Manager):
     
 class TaskInstance(models.Model):
     # core information
+    name = models.CharField(max_length=100)
     patient = models.ForeignKey(Patient)
     task = models.ForeignKey(Task)
     mode = models.CharField(max_length=50, choices=Patient.CONTACT_PREF_CHOICES) # method of contact (e.g. email, sms)
@@ -354,7 +359,7 @@ class TaskInstance(models.Model):
         elif self.is_past(): return "past"
         else: return "unknown"
 
-    def spawn_task(self, task, update_params, schedule_date):
+    def spawn_task(self, task, schedule_date, name=None, update_params={}):
         """
         Spawns a new task for the current patient based on this task.
         The task will run on schedule_date, at which point it will be
@@ -372,7 +377,8 @@ class TaskInstance(models.Model):
 
         t = TaskInstance(
             patient=self.patient,
-            task=self.task,
+            task=task,
+            name=name if name is not None else task.name,
             mode=self.mode,
             process=self.process,
             params=new_params,
