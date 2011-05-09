@@ -1,14 +1,13 @@
 <?xml version="1.0"?>
-<!DOCTYPE interaction SYSTEM "xmltask.dtd">
 
 <interaction id="toplevel">
 	<message>
-	Hi {{participant}}. We will be texting u resources 2 help with ur ASAP goal: <Get copies of cancer treatment medical records.  First contact the doctors who treated ur cancer or medical records office. U may need to fill out a written request form.}}
+	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: Get copies of cancer treatment medical records. First contact the doctors who treated ur cancer or medical records office. U may need to fill out a written request form.
 	</message>
 	
-	<timeout duration="5 days">
+	<timeout delay="in 5 days">
 		<message>
-		Hi {{participant}}. Did u request ur cancer treatment medical records?
+		Hi {{ patient.first_name }}. Did u request ur cancer treatment medical records?
 		</message>
 		
 		<response pattern="yes">
@@ -16,9 +15,9 @@
 			Great! Under CA law, u have the right 2 get copies of ur medical record within 15 days of a written request.
 			</message>
 			
-			<timeout id="received_records_yet" duration="15 days">
+			<timeout id="received_records_yet" delay="in 15 days">
 				<message>
-				Hi {{participant}}. Have u received ur cancer treatment medical records?
+				Hi {{ patient.first_name }}. Have u received ur cancer treatment medical records?
 				</message>
 				
 				<response pattern="yes">
@@ -32,7 +31,7 @@
 					It's ur right 2 get copies of medical records w/in 15 days of a written request. Cancer Legal Resource Center can help, call toll free 866-843-2572 or visit www.CancerLegalResourceCenter.org
 					</message>
 					
-					<timeout duration="5 days">
+					<timeout delay="in 5 days">
 						<message>
 						Did u contact the Cancer Legal Resource Center 2 help u get ur medical records?  Text YES or NO.
 						</message>
@@ -42,8 +41,12 @@
 							Congrats on taking this step. How helpful was the info provided by the Cancer Legal Resource Center? Text: #1-5, with 1- not helpful to 5- very helpful.
 							</message>
 							
-							<response pattern="*">
-								<!-- FIXME: somehow store their response -->
+							<response pattern=".*">
+								<alert name="Feedback">
+									<param key="task">1_MedicalRecords</param>
+									<param key="status">Succeeded</param>
+									<param key="response">{{ message }}</param>
+								</alert>
 								
 								<message>
 								Thank u 4 sharing ur opinions.
@@ -56,9 +59,13 @@
 							Please tell us what additional info or resources u need to get ur cancer treatment medical records.
 							</message>
 							
-							<response pattern="*">
-								<!-- FIXME: somehow store their response -->
-							
+							<response pattern=".*">
+								<alert name="Feedback">
+									<param key="task">1_MedicalRecords</param>
+									<param key="status">Failed</param>
+									<param key="response">{{ message }}</param>
+								</alert>
+								
 								<message>
 								Thank u 4 participating.
 								</message>
@@ -79,7 +86,7 @@
 				Life gets busy. We'll send u a friendly reminder in a week.
 				</message>
 				
-				<timeout duration="7 days">
+				<timeout delay="in 7 days">
 					<link target="received_records_yet" />
 				</timeout>
 			</response>
@@ -89,7 +96,7 @@
 				U can ask ur current doctor or social worker 4 help requesting ur cancer treatment medical records.
 				</message>
 				
-				<timeout duration="7 days">
+				<timeout delay="in 7 days">
 					<link target="received_records_yet" />
 				</timeout>
 			</response>
@@ -99,7 +106,7 @@
 				If ur current doctor requests copies of ur records, u may not have 2 pay.  Cancer Legal Resource Center can help. Call toll free 866-843-2572 or visit www.CancerLegalResourceCenter.org
 				</message>
 				
-				<timeout duration="5 days">
+				<timeout delay="5 days">
 					<link target="clrc_link" />
 				</timeout>
 			</response>
@@ -109,7 +116,7 @@
 				Cancer Legal Resource Center can help w/ getting ur medical records. Call toll free 866-843-2572 or visit www.CancerLegalResourceCenter.org
 				</message>
 				
-				<timeout duration="5 days">
+				<timeout delay="in 5 days">
 					<link target="clrc_link" />
 				</timeout>
 			</response>

@@ -1,9 +1,8 @@
 <?xml version="1.0"?>
-<!DOCTYPE interaction SYSTEM "xmltask.dtd">
 
-<interaction id="toplevel">
+<interaction id="toplevel" prefix="appt">
 	<message>
-	Hi <<participant>>. We will be texting u resources 2 help with ur ASAP goal: <<To schedule your survivorship clinic appointment.>>
+	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: To schedule your survivorship clinic appointment.
 	</message>
 
 	<timeout delay="1 hour">
@@ -13,19 +12,21 @@
 		
 		<response id="appt_prompt" type="date_time">
 			<message>
-			Ur appt is <<2/28/2011 at 5:15 PM>>. Is this correct? If so, text back "ok". If not, text back date & time again.
+			{% load parse_date %}
+			Ur appt is {{ parsed_datetime|relative_date }}. Is this correct? If so, text back "ok". If not, text back date & time again.
 			</message>
 			
 			<response pattern="ok">
-				<store key="appt_date" value="{{ parsed.datetime }}" />
+				<store key="appt_date" value="{{ parsed_datetime }}" />
 				
 				<message>
-				Ur survivorship clinic appt is <<2/28/2011 @5:15 PM>>. U will be reminded the day b4 and the morning of ur appt.
+				{% load parse_date %}
+				Ur survivorship clinic appt is {{ parsed_datetime|relative_date }}. U will be reminded the day b4 and the morning of ur appt.
 				</message>
 				
-				<schedule task="4_Schedule_ReminderNotes" date="{{ parsed.datetime }}" offset="1 day before" />
-				<schedule task="4_Schedule_Reminder" date="{{ parsed.datetime }}" offset="4 hours before" />
-				<schedule task="4_Schedule_Followup" date="{{ parsed.datetime }}" offset="4 hours after" />
+				<schedule task="4_Schedule_ReminderNotes" date="{{ parsed_datetime}}" offset="1 day before" />
+				<schedule task="4_Schedule_Reminder" date="{{ parsed_datetime }}" offset="4 hours before" />
+				<schedule task="4_Schedule_Followup" date="{{ parsed_datetime }}" offset="4 hours after" />
 			</response>
 			
 			<response type="date_time">

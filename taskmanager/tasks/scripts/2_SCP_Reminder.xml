@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
-<!DOCTYPE interaction SYSTEM "xmltask.dtd">
 
-<interaction id="toplevel">
+<interaction id="toplevel" prefix="appt">
 	<message>
-	A reminder that ur doctor appt 2 ask 4 a survivorship care plan is tomorrow <<@5:15 PM (02/28/2011)>>. Remember 2 bring ur cancer treatment records. Reply 'Appt cancel' if canceled. 
+	{% load parse_date %}
+	A reminder that ur doctor appt 2 ask 4 a survivorship care plan is  {{ params.appt_date|relative_date }}. Remember 2 bring ur cancer treatment records. Reply 'cancel' if canceled. 
 	</message>
 	
 	<response pattern="cancel">
@@ -11,6 +11,6 @@
 		Your appointment has been cancelled. Thank you for participating.
 		</message>
 	
-		<abort scope="session" />
+		<abort scope="process" />
 	</response>
 </interaction>

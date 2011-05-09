@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+
+<interaction id="toplevel" prefix="cover">
+	<message>
+	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: To find out how long I'm covered under my current insurance.
+	</message>
+</interaction>

@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
-<!DOCTYPE interaction SYSTEM "xmltask.dtd">
 
-<interaction id="toplevel">
+<interaction id="toplevel" prefix="appt">
 	<message>
 	Did u ask ur doctor 2 create a survivorship care plan? Reply YES or NO, or 'missed' if u missed ur appt.
 	</message>
@@ -16,7 +15,13 @@
 			How helpful was the info texted 2 u? TEXT # 1-5, with 1- not helpful to 5- very helpful.
 			</message>
 			
-			<response pattern="*">
+			<response pattern=".*">
+				<alert name="Feedback">
+					<param key="task">2_SCP_Followup</param>
+					<param key="status">Succeeded</param>
+					<param key="response">{{ message }}</param>
+				</alert>
+								
 				<message>
 				Thank u for sharing ur opinions. Congrats on completing ur ASAP goal.
 				</message>
@@ -29,7 +34,7 @@
 			</message>
 			
 			<response pattern="yes">
-				<schedule task="3_FindSC" offset="30 minutes after" />
+				<schedule task="3_FindSC" date="30 minutes after" />
 			</response>
 			
 			<response pattern="no">
@@ -37,7 +42,13 @@
 				Please tell us what additional info or resources u need 2 ask ur doctor 4 a survivorship care plan.
 				</message>
 				
-				<response pattern="*">
+				<response pattern=".*">
+					<alert name="Feedback">
+						<param key="task">2_SCP_Followup</param>
+						<param key="status">Failed</param>
+						<param key="response">{{ message }}</param>
+					</alert>
+				
 					<message>
 					Thank u 4 participating.
 					</message>
@@ -51,7 +62,13 @@
 		Please tell us what additional info or resources u need 2 ask ur doctor.
 		</message>
 
-		<response pattern="*">
+		<response pattern=".*">
+			<alert name="Feedback">
+				<param key="task">2_SCP_Followup</param>
+				<param key="status">Not Attempted</param>
+				<param key="response">{{ message }}</param>
+			</alert>
+
 			<message>
 			Thank u 4 participating.
 			</message>
@@ -59,6 +76,8 @@
 	</response>
 	
 	<response pattern="missed">
-		<schedule task="2_SCP" offset="5 minutes after" params="repeating:1" />
+		<schedule task="2_SCP" date="5 minutes after">
+			<params key="repeating">true</params>
+		</schedule>
 	</response>
 </interaction>

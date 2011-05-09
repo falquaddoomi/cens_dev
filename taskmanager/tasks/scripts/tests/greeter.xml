@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!DOCTYPE interaction SYSTEM "xmltask.dtd">
+
+<interaction id="toplevel" prefix="greet">
+	<message>
+	Hey, {{ patient.first_name }}! How are you doing?
+	</message>
+	
+	<store key="his_last_name" value="{{ patient.last_name }}" />
+	
+	<response pattern="good">
+		<message>
+		That's great to hear!
+		</message>
+	</response>
+	
+	<response pattern="(?P{@cond@}bad|poor|lonely)">
+		<message>
+		Aww, what's wrong? Why are you {{ match.cond }}?
+		</message>
+		
+		<response pattern=".+">
+			<message>Well, I hope you feel better soon!</message>
+			
+			<store key="last_response" value="{{ message }}" />
+		</response>
+	</response>
+	
+	<response pattern=".*">
+		<message>
+		Sorry, I couldn't understand your input; try again?
+		</message>
+		
+		<link target="toplevel" />
+	</response>
+	
+	<timeout duration="in 1 minute">
+		<message>
+		Hey, are you there, {{ patient.first_name }}?
+		</message>
+		
+		<link target="toplevel" />
+	</timeout>
+</interaction>

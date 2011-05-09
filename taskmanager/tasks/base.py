@@ -10,13 +10,21 @@ class BaseTask(object):
     Provides a set of handlers that tasks should override. All tasks must inherit from this base class.
     """
     
-    def __init__(self, app, instance):
-        self.app = app
+    def __init__(self, dispatch, instance):
+        self.dispatch = dispatch
         self.instance = instance
-        self.params = json.loads(instance.params)
-        self.prefix = ""
+        self._prefix = ""
 
-    def get_prefix(self):
+    @property
+    def params(self):
+        return json.loads(self.instance.params)
+
+    @params.setter
+    def params(self, value):
+        self.instance.params = json.dumps(value)
+
+    @property
+    def prefix(self):
         """
         Returns a prefix which can be used to activate this task. Necessary
         for demultiplexing different kinds of running tasks from each other.
@@ -25,7 +33,15 @@ class BaseTask(object):
         for each running task; the first matching task will have handle() called on it,
         proceeding through each matching task and ending when one returns True.
         """
-        return self.prefix
+        return self._prefix
+
+    @prefix.setter
+    def prefix(self, value):
+        self._prefix = value
+
+    # ==========================
+    # == handlers
+    # ==========================
 
     def start(self):
         """
