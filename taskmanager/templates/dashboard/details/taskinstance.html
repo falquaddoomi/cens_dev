@@ -1,15 +1,23 @@
 {% extends "dashboard/details/generic.html" %}
+{% load parse_json %}
 
 {% block title %}Task Manager :: details :: {{ instance.task.name }}{% endblock %}
-{% block header %}<img src="/static/taskmanager/icons/Appointment.png"  class="dialog_header_icon" />{{ session.task.name }}{% endblock %}
+{% block header %}<img src="/static/taskmanager/icons/Appointment.png"  class="dialog_header_icon" />{{ instance.name }}{% endblock %}
 
 {% block body %}
 <div class="dialog_section overview_section">overview</div>
 
 <table class="dialog_vertical" cellpadding="5" cellspacing="5" style="margin-bottom: 1em;">
 	<tr><td class="dialog_label">process:</td><td>{{ instance.process }}</span></td></tr>
-
+	<tr><td class="dialog_label">type:</td><td>{{ instance.task.name }}</td></tr>
+	<tr><td class="dialog_label">mode:</td><td>{{ instance.mode }}</td></tr>
 	<tr><td class="dialog_label">status:</td><td><span class="task_status {{ instance.get_status }}" style="display: inline-block; width: 60px;">{{ instance.get_status }}</span></td></tr>
+
+	<tr><td class="dialog_label">scheduled for:</td><td>{{ instance.schedule_date|date }}, {{ instance.schedule_date|time }}</td></tr>
+
+	{% if instance.ran_date %}
+	<tr><td class="dialog_label">ran on:</td><td>{{ instance.ran_date|date }}, {{ instance.ran_date|time }}</td></tr>
+	{% endif %}
 
 	{% if instance.status == "completed" %}
 		<tr><td class="dialog_label">completed on:</td><td>{{ instance.completed_date|date }}, {{ instance.completed_date|time }}</td></tr>
@@ -17,6 +25,16 @@
 		{% if instance.timeout_date %}
 		<tr><td class="dialog_label">times out in:</td><td>{{ instance.timeout_date|timeuntil }}</td></tr>
 		{% endif %}
+	{% endif %}
+
+	{% if instance.params %}
+	<tr><td class="dialog_label" valign="top">arguments:</td><td>
+		<div style="background: #eee; padding: 5px; -moz-border-radius: 5px; -webkit-border-radius: 5px;">
+			<table cellpadding="5" cellspacing="0">
+				{{ instance.params|parse_json|safe }}
+			</table>
+		</div>
+	</td></tr>
 	{% endif %}
 
 	</tr>

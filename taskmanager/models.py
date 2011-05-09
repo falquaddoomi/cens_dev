@@ -155,20 +155,27 @@ class ProcessManager(models.Manager):
     def get_pending_processes(self):
         # a pending process has only pending tasks
         qset = super(ProcessManager, self).get_query_set()
-        return qset.filter(taskinstance__status="pending")
+        return qset.exclude(taskinstance__status__in=["running","completed","errored"])
     
     def get_current_processes(self):
         # a current process has at least one running task, or a combination of pending and complete tasks
-        qset = super(ProcessManager, self).get_query_set()
-        return qset.filter(
-            Q(taskinstance__status="running")|
-            (Q(taskinstance__status="pending") & Q(taskinstance__status="completed"))
+        # qset = super(ProcessManager, self).get_query_set()
+        # i really need to express this in the ORM, but this'll do for now :(
+        return self.raw(
+            '''
+            select P.* from taskmanager_process P
+            where
+            (select count(*) from taskmanager_taskinstance TI where TI.process_id=P.id and TI.status = "pending") > 0 or
+            (
+                (select count(*) from taskmanager_taskinstance TI where TI.process_id=P.id and TI.status = "pending") > 0 and
+                (select count(*) from taskmanager_taskinstance TI where TI.process_id=P.id and TI.status = "completed") > 0
             )
-    
+            ''')
+
     def get_completed_processes(self):
-        # a completed process has only complete scheduled tasks and sessions
+        # a completed process has only complete or possibly errored tasks
         qset = super(ProcessManager, self).get_query_set()
-        return qset.exclude(~Q(taskinstance__status="completed"))
+        return qset.exclude(taskinstance__status__in=["pending","running"])
 
     def reap_empty_processes(self):
         # removes any processes that have no referring instances
@@ -372,7 +379,7 @@ class TaskInstance(models.Model):
         """
 
         # copy existing parameters and update them with the new params
-        new_params = dict(self.params)
+        new_params = dict(json.loads(self.params))
         new_params.update(update_params)
 
         t = TaskInstance(
@@ -381,7 +388,7 @@ class TaskInstance(models.Model):
             name=name if name is not None else task.name,
             mode=self.mode,
             process=self.process,
-            params=new_params,
+            params=json.dumps(new_params),
             schedule_date=schedule_date
             )
         t.save()

@@ -115,11 +115,11 @@ def task_errored(response, instanceid):
     response.printTraceback()
 
 def instance_timeout_finished(response, instanceid):
-    t = instance.objects.get(pk=instanceid)
+    t = TaskInstance.objects.get(pk=instanceid)
     print "- timed out %s (%d) w/code %s" % (t.task.name, instanceid, str(response.code))
 
 def instance_timeout_errored(response, instanceid):
-    t = instance.objects.get(pk=instanceid)
+    t = TaskInstance.objects.get(pk=instanceid)
     print "- errored out on timing out %s (%d), reason: %s" % (t.task.name, instanceid, response.getErrorMessage())
     response.printTraceback()
 
@@ -183,7 +183,7 @@ def check_timeouts():
         print "Timing out instance: %s (%d)" % (instance.task.name, instance.id)
 
         payload_dict = {
-            'instance': instance.id
+            'instanceid': instance.id
             }
 
         payload = urllib.urlencode(payload_dict)

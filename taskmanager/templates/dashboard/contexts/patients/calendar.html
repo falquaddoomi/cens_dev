@@ -35,7 +35,7 @@ $(document).ready(function() {
 				title: "{{ task.task.name }}",
 				id: "{{ task.id }}",
 				procname: "{{ task.process.name }}",
-				start: "{{ task.schedule_date }}",
+				start: "{{ task.schedule_date|date:"Y-m-d H:i:s" }}",
 				className: "{{ task.get_status }}_event scheduledtask_event_icon",
 				allDay: false
 			}{% if not forloop.last %},{% endif %}

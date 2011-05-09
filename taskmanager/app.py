@@ -88,7 +88,7 @@ class App(rapidsms.apps.base.AppBase):
         identityType: a string that identifies the backend ('email' and 'sms' are most common)
         subject: the subject line if the identity type is 'email', otherwise ignored
         """
-        
+
         # Used to send messages when get a timeout or from init
         # try:
         from rapidsms.models import Backend 

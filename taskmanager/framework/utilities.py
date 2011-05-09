@@ -58,8 +58,6 @@ def parsedt(datestr, offset=None, verify_complete=False):
     pdt = parsedatetime.Calendar()
     (result, retval) = pdt.parse(datestr, offset)
 
-    print "result: %s, retval: %d" % (result, retval)
-
     if verify_complete and (retval < 2):
         raise ValueError("Could not parse '%s' as both a date and time (result: %d)" % (datestr, retval))
     

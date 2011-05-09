@@ -17,38 +17,29 @@
 <div class="dialog_section tasks_section">tasks</div>
 
 <table cellpadding="0" cellspacing="0" class="task_list" style="width: 100%;">
-	{% for instance in process.get_current_tasks %}
+	{% for instance in process.get_tasks %}
 	<tr>
 		<td style="width: 60px; padding-right: 0px;">
-			<div class="task_status {{ session.get_status }}">{{ instance.get_status }}</div>
+			<div class="task_status {{ instance.get_status }}">{{ instance.get_status }}</div>
 		</td>
 
 		<td>
-		<b>{{ session.task.name }}</b>
+		<b>{{ instance.task.name }}</b>
 		<div class="subtext">
-		{% if session.completed %}
-		completed on {{ instance.completed_date|date }}, {{ instance.completed_date|time }}
+		{% if instance.status == "pending" %}
+		scheduled for {{ instance.schedule_date|date }}, {{ instance.schedule_date|time }}
 		{% else %}
-		state: {{ instance.details }}
+			{% if instance.status == "running" %}
+			running since {{ instance.ran_date|date }}, {{ instance.ran_date|time }}
+			{% else %}
+				{% if instance.status == "completed" %}
+				completed on {{ instance.completed_date|date }}, {{ instance.completed_date|time }}
+				{% else %}
+				state: {{ instance.details }}
+				{% endif %}
+			{% endif %}
 		{% endif %}
 		</div>
-		</td>
-
-		<td class="command" style="text-align: right;">
-			<a href="/taskmanager/tasks/{{ instance.id }}/details/" rel="facebox">details</a>
-		</td>
-	</tr>
-	{% endfor %}
-
-	{% for instance in process.get_pending_tasks %}
-	<tr>
-		<td style="width: 60px; padding-right: 0px;">
-			<div class="task_status {{ task.get_status }}">{{ task.get_status }}</div>
-		</td>
-
-		<td>
-		<b>{{ task.task.name }}</b>
-		<div class="subtext">scheduled for {{ instance.schedule_date|date }}, {{ instance.schedule_date|time }}</div>
 		</td>
 
 		<td class="command" style="text-align: right;">
