@@ -36,6 +36,7 @@ post_save.connect(user_save_handler, sender=User)
 class Patient(models.Model):
     CONTACT_PREF_CHOICES = (
         ('sms', 'via SMS'),
+        ('clickatell', 'via Clickatell SMS'),
         ('email', 'via E-mail'),
         ('irc', 'via IRC'),
     )
@@ -161,16 +162,18 @@ class ProcessManager(models.Manager):
         # a current process has at least one running task, or a combination of pending and complete tasks
         # qset = super(ProcessManager, self).get_query_set()
         # i really need to express this in the ORM, but this'll do for now :(
-        return self.raw(
-            '''
-            select P.* from taskmanager_process P
-            where
-            (select count(*) from taskmanager_taskinstance TI where TI.process_id=P.id and TI.status = "pending") > 0 or
-            (
-                (select count(*) from taskmanager_taskinstance TI where TI.process_id=P.id and TI.status = "pending") > 0 and
-                (select count(*) from taskmanager_taskinstance TI where TI.process_id=P.id and TI.status = "completed") > 0
-            )
-            ''')
+        ##        return self.raw(
+        ##            '''
+        ##            select P.* from taskmanager_process P
+        ##            where
+        ##            (select count(*) from taskmanager_taskinstance TI where TI.process_id=P.id and TI.status = "pending") > 0 or
+        ##            (
+        ##                (select count(*) from taskmanager_taskinstance TI where TI.process_id=P.id and TI.status = "pending") > 0 and
+        ##                (select count(*) from taskmanager_taskinstance TI where TI.process_id=P.id and TI.status = "completed") > 0
+        ##            )
+        ##            ''')
+        qset = super(ProcessManager, self).get_query_set()
+        return qset.filter(taskinstance__status="running")
 
     def get_completed_processes(self):
         # a completed process has only complete or possibly errored tasks
@@ -195,6 +198,9 @@ class Process(models.Model):
 
     def get_pending_tasks(self):
         return self.taskinstance_set.filter(status="pending")
+
+    def get_non_pending_tasks(self):
+        return self.taskinstance_set.filter(status__in=["running", "completed", "errored"])
     
     def get_current_tasks(self):
         return self.taskinstance_set.filter(status="running")
@@ -233,6 +239,10 @@ class TaskInstanceManager(models.Manager):
     def get_due_tasks(self):
         qset = super(TaskInstanceManager, self).get_query_set()
         return qset.filter(schedule_date__lte=datetime.now(), status="pending")
+
+    def get_non_pending_tasks(self):
+        qset = super(TaskInstanceManager, self).get_query_set()
+        return qset.filter(status__in=["running", "completed", "errored"])
     
     def get_running_tasks(self):
         qset = super(TaskInstanceManager, self).get_query_set()
@@ -250,7 +260,7 @@ class TaskInstanceManager(models.Manager):
         qset = super(TaskInstanceManager, self).get_query_set()
         return qset.filter(status="errored")
 
-    def create_task(self, patient, task, params, schedule_date, creator="n/a", name=None):
+    def create_task(self, patient, task, params, schedule_date, creator="asap_admin", name=None):
         """
         Creates a new task for a given patient, with a dict of params
         (usually specified from filling out a TaskTemplate). The task
@@ -265,7 +275,7 @@ class TaskInstanceManager(models.Manager):
 
         p = Process(
             name=(name if name is not None else task.name),
-            creator=creator,
+            creator=Clinician.objects.get(user__username=creator),
             patient=patient
             )
         p.save()

@@ -51,6 +51,7 @@ $(document).ready(function() {
 			<div style="position: absolute; top: 10px; right: 10px; color: #555;">
 				<b>color key:</b>
 				<span class="task_status pending" style="display: inline-block; width: 60px;">pending</span>
+				<span class="task_status due" style="display: inline-block; width: 60px;">due</span>
 				<span class="task_status running" style="display: inline-block; width: 60px;">running</span>
 				<span class="task_status past" style="display: inline-block; width: 60px;">past</span>
 			</div>
@@ -64,7 +65,7 @@ $(document).ready(function() {
 							</a>
 						</div>
 
-						{% for instance in process.get_tasks %}
+						{% for instance in process.get_non_pending_tasks %}
 						<div class="history_item {{ instance.get_status }}_light">
 							<div class="history_session_header">
 								<a id="session_{{ instance.id }}" name="session_{{ instance.id }}" href="/taskmanager/tasks/{{ instance.id }}/details/" class="history_task_link" rel="facebox">
@@ -99,7 +100,7 @@ $(document).ready(function() {
 								{% for instance in pending_tasks %}
 								<a href="/taskmanager/tasks/{{ instance.id }}/details/" class="history_task_link" rel="facebox">
 									<div class="history_task {{ instance.get_status }}_light">
-										<b>{{ instance.task.name }}</b> on {{ instance.schedule_date|date }}, {{ instance.schedule_date|time }}
+										<b>{{ instance.task.name }}</b> scheduled for {{ instance.schedule_date|date }}, {{ instance.schedule_date|time }}
 									</div>
 								</a>
 								{% endfor %}
