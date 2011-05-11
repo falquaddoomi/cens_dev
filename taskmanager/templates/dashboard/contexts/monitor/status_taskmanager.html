@@ -53,7 +53,7 @@ $(document).ready(function() {
 
 		// send an AJAX request to the taskmanager for its runtime machine dispatch table
 		$.ajax({
-		  url: '/proxy/' + encodeURIComponent('http://localhost:8001/taskmanager/status'),
+		  url: '/taskmanager/proxy/' + encodeURIComponent('http://localhost:{{ taskmanager_port }}/taskmanager/status'),
 		  dataType: 'json',
 		  success: function(data) {
 		  	out = "<h2 class=\"my_h2\">Task Manager: <span style=\"display: inline-block; width: 150px;\" class=\"task_status running\">running</span></h2>";

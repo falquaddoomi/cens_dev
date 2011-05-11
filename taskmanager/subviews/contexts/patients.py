@@ -68,6 +68,9 @@ def history(request, patientid):
         'section': 'history',
         'patient': Patient.objects.get(pk=patientid)
         }
+
+    # gather up all the processes for this user initially
+    patient_processes = Process.objects.filter(patient__id=patientid)
         
     if 'from' in request.GET:
         # parse at least the from field, and preferably the to field as well
@@ -81,7 +84,7 @@ def history(request, patientid):
 
         if 'to' not in request.GET or request.GET['to'].strip() == "":
             # use only the from field
-            field_vars['processes'] = Process.objects.filter(patient__id=patientid,add_date=from_datetime)
+            patient_processes = patient_processes.filter(add_date=from_datetime)
         else:
             # attempt to parse to, since it's here
             to_clean = urllib.unquote(request.GET['to'].replace('+',' '))
@@ -92,17 +95,13 @@ def history(request, patientid):
             if (to_time[1] > 0):
                 # it was parseable, make the range reflect this
                 to_datetime = datetime.fromtimestamp(time.mktime(to_time[0]))
-                field_vars['processes'] = Process.objects.filter(patient__id=patientid,add_date__gte=from_datetime,add_date__lte=to_datetime)
+                field_vars['processes'] = patient_processes.filter(add_date__gte=from_datetime,add_date__lte=to_datetime)
             else:
                 # it was unparseable, just use from
-                field_vars['processes'] = Process.objects.filter(patient__id=patientid,add_date__gte=from_datetime)
-    else:
-        field_vars['processes'] = Process.objects.filter(patient__id=patientid)
+                field_vars['processes'] = patient_processes.filter(add_date__gte=from_datetime)
 
     # order by add date descending after we have a list
-    # django lazy query evaluation means that nothing is actually happening here
-    # the ordering will occur when the page iterates over 'processes'
-    field_vars['processes'] = field_vars['processes'].order_by('-add_date')
+    field_vars['processes'] = patient_processes.order_by('-add_date')
     
     merge_contextuals(field_vars, request, patientid)
     return render_to_response('dashboard/contexts/patients/history.html', field_vars, context_instance=RequestContext(request))

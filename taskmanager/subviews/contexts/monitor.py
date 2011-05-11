@@ -18,6 +18,9 @@ import parsedatetime.parsedatetime_consts as pdc
 # for parsing argument lists
 import json, urllib
 
+# for getting the port of the running AJAX rapidsms app
+import rapidsms.contrib.ajax.settings
+
 # merges in the variables for this context
 # call this right before you render to response
 def merge_contextuals(context, request, serviceid):
@@ -36,7 +39,9 @@ def merge_contextuals(context, request, serviceid):
 def status(request, serviceid):
     field_vars = {
         'section': 'status',
-        'service': Service.objects.get(pk=serviceid)
+        'service': Service.objects.get(pk=serviceid),
+        'scheduler_port': 8082,
+        'taskmanager_port': rapidsms.contrib.ajax.settings.AJAX_PROXY_PORT
         }
 
     # figure out which specific template to use to render the status page

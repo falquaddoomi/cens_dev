@@ -60,7 +60,7 @@ $(document).ready(function() {
 
 		// send an AJAX request to the scheduler for its status
 		$.ajax({
-		  url: '/proxy/' + encodeURIComponent('http://localhost:8080/status'),
+		  url: '/taskmanager/proxy/' + encodeURIComponent('http://localhost:{{ scheduler_port }}/status'),
 		  data: { 'json': true },
 		  dataType: 'json',
 		  success: function(data) {

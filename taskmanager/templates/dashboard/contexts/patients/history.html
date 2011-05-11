@@ -18,7 +18,7 @@ $(document).ready(function() {
 			$elem.addClass("selected_item");
 		} else {
 			// display some kind of notification that the object doesn't exist
-			alert("ERROR: linked object no longer exists (the task may have been deleted)");
+			// alert("ERROR: linked object no longer exists (the task may have been deleted)");
 		}
 	}
 
@@ -82,11 +82,11 @@ $(document).ready(function() {
 								</tr>
 							{% endfor %}
 
-							{% if instance.status != "completed" and instance.details %}
+							{% if instance.status != "completed" %}
 								<tr class="state_msg"">
 									<td class="msg_label"><b>state:</b></td>
 									<td class="msg_data">
-									<b>{{ instance.details }}</b>{% if instance.status != "completed" and instance.timeout_date %} (times out in <b>{{ instance.timeout_date|timeuntil }}</b>){% endif %}
+									{% if instance.status != "completed" and instance.timeout_date %} times out in <b>{{ instance.timeout_date|timeuntil }}</b>{% endif %}
 									</td>
 								</tr>
 							{% endif %}
