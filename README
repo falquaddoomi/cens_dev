@@ -1,1 +1,37 @@
-Hi, this is the dev branch of the main CENS JCCC project. I'll update this later.
+Hi, this is the dev branch of the main CENS JCCC project.
+
+The project has a few important dependencies, some of which I haven't
+added to the project yet (namely, the clickatell, jabber, and working irc
+backends for rapidsms). I haven't added them yet because I'm not sure
+how to package them along with the site in a sensible way, but once I figure
+that out I'll put them up here, too.
+
+Anyhow, the dependencies that you *can* resolve on your own are:
+- Django 1.3
+- South 0.7.2
+- Twisted and Wokkel (will check the versions shortly)
+- django-dbtemplates
+
+Before you attempt to run the project, be sure to edit the "settings.sample.py"
+file appropriately and copy it renamed to the same directory as "settings.py".
+You'll likely need to change the paths for logging, since right now they're
+local to my machine (will look into fixing that).
+
+There are three components which you must initiate to start the system:
+1) the scheduler, invoked via ./manage.py scheduler <port>
+2) the router, invoked via ./manage.py runrouter
+3) the web interface, invoked via ./manage.py runserver <address>:<port>
+
+You can still run any component independently, but they will of course
+be unable to attend to their responsibilities unless they're running.
+Specifically, no tasks will be executed if the scheduler isn't running,
+and no messages can be received/sent if the router isn't running. The
+webserver is non-essential to the execution of the system, but is
+helpful for determing what it's doing. :)
+
+The main administrative interface for tasks is located at
+http://<server-ip>:<port>/taskmanager/
+
+Do let me know if you run into any problems. Keep in mind that this
+is for internal development mostly, so a lot of it may not make sense. Still,
+you're welcome to hack away at it if you like. :)
