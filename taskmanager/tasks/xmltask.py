@@ -102,6 +102,8 @@ class BaseXmlTask(BaseTask):
         
         # first off, clear all pre-existing conditions
         self.conditions = []
+        self.instance.timeout_date = None
+        self.instance.save()
         
         # construct a default context for this evaluation
         # and add any parent context info to the dict
@@ -116,7 +118,8 @@ class BaseXmlTask(BaseTask):
         # pre-step: determine if there are any elements that require a response
         # that may be siblings to a <message> element. we need to know this
         # so we know whether to tell them to "type prefix before their response"
-        accepts_response = ("response" in [node.tag for node in top])
+        siblings = [node.tag for node in top]
+        accepts_response = ("response" in siblings or "link" in siblings)
 
         # execute all top-level elements
         for node in top:
@@ -149,6 +152,10 @@ class BaseXmlTask(BaseTask):
                     triggerdate = utilities.parsedt(duration, offset)
                 except KeyError as ex:
                     raise XMLFormatException("%s node expects attribute '%s'" % (node.tag, ex.args[0]))
+
+                # FIXME: temporarily overriding the triggerdate to be 2 minutes
+                # for the sake of the demo
+                # triggerdate = utilities.parsedt("in 30 seconds")
         
                 # add the condition of the response to the action queue
                 print "--> Adding a timeout condition in %s" % (top)
@@ -221,7 +228,7 @@ class BaseXmlTask(BaseTask):
                     alert_args[param.attrib['key']] = self.templatize(param.text, default_context)
                 
                 alert_args['url'] = '/taskmanager/patients/%d/history/#session_%d' % (self.instance.patient.id, self.instance.id)
-                alert_args.update(default_context)
+                # alert_args.update(default_context)
                 Alert.objects.add_alert(name, arguments=alert_args, patient=self.instance.patient)
             elif node.tag == "abort":
                 # remove all pending tasks belonging to the same process

@@ -28,11 +28,6 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
         # but #2 is trickier...for now, we're going with a prefix given
         # by the task that the user must include in their response
         self.dispatch = {}
-
-        # kill all current sessions, since our dispatch is empty at start
-        TaskInstance.objects.get_running_tasks().delete()
-        # and kill all the resulting hollow processes
-        Process.objects.reap_empty_processes()
         
         # a reference to the app, so we can send messages to the user
         # w/o first receiving a message
@@ -94,7 +89,7 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
         try:
             if backend == u'sms' or backend == u'clickatell':
                 patient = Patient.objects.get(address=msg.connection.identity)
-            elif backend == u'email':
+            elif backend == u'email' or backend == u'jabber':
                 patient = Patient.objects.get(email=msg.connection.identity)
             elif backend == u'irc':
                 patient = Patient.objects.get(handle=msg.connection.identity)
@@ -147,7 +142,7 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
             # look up the corresponding machine so we can examine its prefix
             machine = self.dispatch[instance.id]['machine']
 
-            if machine.prefix == prefix:
+            if machine.prefix.lower() == prefix.lower():
                 # it matches, so let's try to run handle on it
                 # we only give it the message, not the prefix
                 try:
@@ -200,9 +195,11 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
             prefixes = [self.dispatch[instance.id]['machine'].prefix for instance in patient_taskinstances]
             msg.respond("Please include one of the following before your message: %s" % (", ".join(prefixes)))
             return True
-            
-        # 3) if we're here, they don't have any tasks at all
-        msg.respond("You have no running tasks right now")
+        elif patient_taskinstances.count() <= 0:
+            # only send them "you have no running tasks" if they truly don't
+            msg.respond("You have no running tasks right now")
+
+        # 3) if we're here, they don't have any tasks that matched; not sure what we should do...
         return True
 
     def timeout(self, instance):
@@ -275,11 +272,25 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
         to the end of the message.
         """
         # look up the machine and formulate the prefix
-        if accepts_response:
+        # only append it if they have more than one running task
+        if accepts_response and TaskInstance.objects.filter(patient=instance.patient,status="running").count() > 1:
             message += ' Type "%s" before your reply.' % self.dispatch[instance.id]['machine'].prefix
         # and send the message, finally
         LogMessage(instance=instance, message=message, outgoing=True).save()
         self.app.send(instance.patient.get_address(), message, identityType=instance.mode)
+
+    def get_dispatch_table(self):
+        """
+        Returns the dispatch table in a format that the task manager status page can parse.
+        """
+        dispatch_table = []
+        for instanceid in self.dispatch:
+            dispatch_table.append({
+                'address': self.dispatch[instanceid]['instance'].patient.address,
+                'machine': self.dispatch[instanceid]['instance'].task.name,
+                'status': self.dispatch[instanceid]['instance'].status
+                })
+        return dispatch_table
 
 # =============================================================
 # === signal handlers and other miscellanea below...

@@ -57,7 +57,7 @@ class App(rapidsms.apps.base.AppBase):
         # this one's invoked from the interface on the Monitor::Task Manager view.
         # we should return some salient details about what tasks we have running,
         # who they're for, and anything else that might be useful to know...
-        return {'status':'OK'}
+        return self.dispatch.get_dispatch_table()
 
     def ajax_POST_exec(self, getargs, postargs=None):
         # we've received a request from the scheduler
