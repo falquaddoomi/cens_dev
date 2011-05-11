@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+	</head>
+
+	<body>
+		<form method="POST" action=".">
+			{% csrf_token %}
+
+			<div class="formset">
+				<label for="diagnosis_list">Diagnosis:</label>
+				<ul id="diagnosis_list" class="checkboxlist">
+					<li><input type="checkbox" name="diagnoses" id="diagnosis_Leukemia" value="Leukemia" /> <label for="diagnosis_Leukemia">Leukemia</label></li>
+					<li><input type="checkbox" name="diagnoses" id="diagnosis_Hodgkin_Lymphoma" value="Hodgkin Lymphoma" /> <label for="diagnosis_Hodgkin_Lymphoma">Hodgkin Lymphoma</label></li>
+					<li><input type="checkbox" name="diagnoses" id="diagnosis_Non_Hodgkin_Lymphoma" value="Non-Hodgkin Lymphoma" /> <label for="diagnosis_Non_Hodgkin_Lymphoma">Non-Hodgkin Lymphoma</label></li>
+					<li><input type="checkbox" name="diagnoses" id="diagnosis_Brain_Central_nervous_system" value="Brain/Central Nervous System" /> <label for="diagnosis_Brain_Central_nervous_system">Brain/Central Nervous System</label></li>
+					<li><input type="checkbox" name="diagnoses" id="diagnosis_Kidney_Wilms_Tumor" value="Kidney/Wilm's Tumor" /> <label for="diagnosis_Kidney_Wilms_Tumor">Kidney/Wilm's Tumor</label></li>
+					<li><input type="checkbox" name="diagnoses" id="diagnosis_Neuroblastoma" value="Neuroblastoma" /> <label for="diagnosis_Neuroblastoma">Neuroblastoma</label></li>
+					<li><input type="checkbox" name="diagnoses" id="diagnosis_Soft_tissue_Sarcoma" value="Soft-tissue Sarcoma" /> <label for="diagnosis_Soft_tissue_Sarcoma">Soft-tissue Sarcoma</label></li>
+					<li><input type="checkbox" name="diagnoses" id="diagnosis_Bone_Osteosarcoma" value="Bone/Osteosarcoma" /> <label for="diagnosis_Bone_Osteosarcoma">Bone/Osteosarcoma</label></li>
+					<li><input type="checkbox" name="diagnoses" id="diagnosis_Testicular" value="Testicular" /> <label for="diagnosis_Testicular">Testicular</label></li>
+					<li><input type="checkbox" name="diagnoses" id="diagnosis_Ovary_Germ_Cell_Tumor" value="Ovary/Germ Cell Tumor" /> <label for="diagnosis_Ovary_Germ_Cell_Tumor">Ovary/Germ Cell Tumor</label></li>
+					<li><input type="checkbox" name="diagnoses" id="diagnosis_other" value="Other" /> <label for="diagnosis_other">Other</label> <span id="diagnosis_other_info" style="display: none;">please describe: <input type="text" name="diagnosis_other_description" /></span></li>
+					<li><input type="checkbox" name="diagnoses" id="diagnosis_dont_know" value="Don't Know" /> <label for="diagnosis_dont_know">Don't Know</label></li>
+				</ul>
+			</div>
+
+			<input type="submit" value="Submit!" />
+		</form>
+
+		{% if diagnoses %}
+		<div>
+			{% for i in diagnoses %}
+			{{ i }}<br />
+			{% endfor %}
+		</div>
+		{% endif %}
+	</body>
+</html>

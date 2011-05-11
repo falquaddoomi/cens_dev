@@ -3,5 +3,6 @@ import views
 
 urlpatterns = patterns('linearize.views',
     # main and only page
-    url(r'^/?', 'index'),
+    # url(r'/?', 'index'),
+    url(r'formtest/?', 'formtest'),
 )
