@@ -2,7 +2,7 @@
 
 <interaction id="toplevel" prefix="appt">
 	<message condition="{% if not params.repeating %}ok{% endif %}">
-	Hi <<participant>>. We will be texting u resources 2 help with ur ASAP goal: Ask my doctor to create a Survivorship Care Plan.
+	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: Ask my doctor to create a Survivorship Care Plan.
 	</message>
 
 	<timeout delay="1 hour">

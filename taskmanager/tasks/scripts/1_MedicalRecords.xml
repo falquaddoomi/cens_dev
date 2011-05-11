@@ -24,6 +24,18 @@
 					<message>
 					How helpful was the info texted 2 u? Text: # 1-5, with 1- not helpful to 5- very helpful.
 					</message>
+					
+					<response pattern=".*">
+						<alert name="Feedback">
+							<param key="task">1_MedicalRecords</param>
+							<param key="status">Initial Success</param>
+							<param key="response">{{ message }}</param>
+						</alert>
+
+						<message>
+						Thank u 4 sharing ur opinions.
+						</message>
+					</response>
 				</response>
 				
 				<response id="clrc_link" pattern="no">
@@ -44,7 +56,7 @@
 							<response pattern=".*">
 								<alert name="Feedback">
 									<param key="task">1_MedicalRecords</param>
-									<param key="status">Succeeded</param>
+									<param key="status">Delayed Success</param>
 									<param key="response">{{ message }}</param>
 								</alert>
 								
