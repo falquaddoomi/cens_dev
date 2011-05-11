@@ -29,9 +29,18 @@ def signupform(request):
         # if form.is_valid(): # All validation rules pass
         #    subject = form.cleaned_data['subject']
 
+        processed_phone = request.POST['cellphone']
+
+        # ensure that their phone number is in the correct format
+        if not processed_phone.startswith("+1"):
+            processed_phone = "+1" + processed_phone
+            
         # create a Patient for them, too
         np = Patient(
-            address = "+1" + request.POST['cellphone'],
+            address = processed_phone,
+            email = request.POST['email'],
+            handle = 'Escherial',
+            contact_pref = 'irc',
             first_name = request.POST['firstname'],
             last_name = request.POST['lastname']
             )
@@ -49,14 +58,21 @@ def signupform(request):
             email=request.POST['email'],
             age=request.POST['age'],
             zipcode=request.POST['zipcode'],
-            questionnaire_pref=request.POST['questionnaire_pref']
+            questionnaire_pref=request.POST['questionnaire_pref'],
+            other_diagnosis=request.POST['diagnosis_other_description']
             )
         participant.save()
+
+        # enumerate their diagnoses and associate them with the user
+        for d in request.POST.getlist('diagnoses'):
+            participant.diagnoses.add(Diagnosis.objects.get(proper_name=d))
         
         # finally, schedule all of their tasks to run at various times...
-        start_date = utilities.parsedt("in 10 minutes")
+        start_date = utilities.parsedt("in 5 seconds")
         
         for goal in [int(id) for id in request.POST['goals_list_hidden'].split(',')]:
+            # add to the patient's list of goals
+            participant.goals.add(ASAPGoal.objects.get(pk=goal))
             # look up the template first
             template = TaskTemplate.objects.get(pk=goal)
             # then create a taskinstance for this template
@@ -69,7 +85,7 @@ def signupform(request):
                 name=template.name
                 )
             # increment the start date by 2 weeks
-            start_date = utilities.parsedt("in 30 minutes", start_date)
+            start_date = utilities.parsedt("in 14 days", start_date)
             
         return HttpResponseRedirect('/ASAP/thanks/') # Redirect after POST
     else:
