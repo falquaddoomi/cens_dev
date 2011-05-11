@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<interaction id="toplevel">
+<interaction id="toplevel" prefix="records">
 	<message>
 	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: Get copies of cancer treatment medical records. First contact the doctors who treated ur cancer or medical records office. U may need to fill out a written request form.
 	</message>

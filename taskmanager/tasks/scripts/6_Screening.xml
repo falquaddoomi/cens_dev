@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<interaction id="toplevel" prefix="read">
+<interaction id="toplevel" prefix="screen">
 	<message>
 	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: Schedule my late effect screenings.
 	</message>

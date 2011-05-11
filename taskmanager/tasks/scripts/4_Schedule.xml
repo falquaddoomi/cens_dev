@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<interaction id="toplevel" prefix="appt">
+<interaction id="toplevel" prefix="sched">
 	<message>
 	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: To schedule your survivorship clinic appointment.
 	</message>

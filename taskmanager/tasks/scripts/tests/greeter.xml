@@ -34,7 +34,7 @@
 		<link target="toplevel" />
 	</response>
 	
-	<timeout duration="in 1 minute">
+	<timeout delay="in 1 minute">
 		<message>
 		Hey, are you there, {{ patient.first_name }}?
 		</message>
