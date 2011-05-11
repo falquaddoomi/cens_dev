@@ -38,6 +38,7 @@ class Patient(models.Model):
         ('sms', 'via SMS'),
         ('clickatell', 'via Clickatell SMS'),
         ('email', 'via E-mail'),
+        ('jabber', 'via Jabber'),
         ('irc', 'via IRC'),
     )
     address = models.CharField(max_length=200) # phone number, but address for compatibility
@@ -50,14 +51,11 @@ class Patient(models.Model):
     halted = models.BooleanField(default=False)
 
     def get_address(self):
-        if self.contact_pref == "phone": return self.address
-        elif self.contact_pref == "email": return self.email
-        elif self.contact_pref == "irc": return self.handle
-        else: return self.address
+        return self.get_mode_address(self.contact_pref)
 
     def get_mode_address(self,mode):
-        if mode == "phone": return self.address
-        elif mode == "email": return self.email
+        if mode == "sms" or mode == "clickatell": return self.address
+        elif mode == "email" or mode == "jabber": return self.email
         elif mode == "irc": return self.handle
         else: return self.address
         
