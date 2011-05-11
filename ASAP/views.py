@@ -18,7 +18,11 @@ import parsedatetime.parsedatetime_consts as pdc
 # for parsing argument lists
 import json, urllib
 
+from toolbox.basicauth import logged_in_or_basicauth
+from taskmanager.framework import utilities
+
 @csrf_protect
+@logged_in_or_basicauth()
 def signupform(request):
     if request.method == 'POST': # If the form has been submitted...
         # form = ASAPParticipantForm(request.POST) # A form bound to the POST data
@@ -27,7 +31,7 @@ def signupform(request):
 
         # create a Patient for them, too
         np = Patient(
-            address = request.POST['cellphone'],
+            address = "+1" + request.POST['cellphone'],
             first_name = request.POST['firstname'],
             last_name = request.POST['lastname']
             )
@@ -35,6 +39,37 @@ def signupform(request):
         
         # we're assigning all ASAP signups to the ASAP Admin account
         np.clinicians.add(Clinician.objects.get(user=User.objects.get(username='asap_admin')))
+
+        # also create an ASAPParticipant and put all the form data into their instance
+        participant = ASAPParticipant(
+            patient=np,
+            firstname=request.POST['firstname'],
+            lastname=request.POST['lastname'],
+            cellphone=request.POST['cellphone'],
+            email=request.POST['email'],
+            age=request.POST['age'],
+            zipcode=request.POST['zipcode'],
+            questionnaire_pref=request.POST['questionnaire_pref']
+            )
+        participant.save()
+        
+        # finally, schedule all of their tasks to run at various times...
+        start_date = utilities.parsedt("in 10 minutes")
+        
+        for goal in [int(id) for id in request.POST['goals_list_hidden'].split(',')]:
+            # look up the template first
+            template = TaskTemplate.objects.get(pk=goal)
+            # then create a taskinstance for this template
+            TaskInstance.objects.create_task(
+                patient=np,
+                task=template.task,
+                params=template.arguments,
+                schedule_date=start_date,
+                creator="asap_admin",
+                name=template.name
+                )
+            # increment the start date by 2 weeks
+            start_date = utilities.parsedt("in 30 minutes", start_date)
             
         return HttpResponseRedirect('/ASAP/thanks/') # Redirect after POST
     else:

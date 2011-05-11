@@ -160,12 +160,12 @@
 						</div>
 
 						<div class="formset">
-							<label for="age">Zip Code:</label>
+							<label for="zipcode">Zip Code:</label>
 							<input type="text" name="zipcode" />
 						</div>
 
 						<div class="formset">
-							<label for="age">Diagnosis:</label>
+							<label for="diagnosis_list">Diagnosis:</label>
 							<ul id="diagnosis_list" class="checkboxlist">
 								<li><input type="checkbox" name="diagnoses" id="diagnosis_Leukemia" value="Leukemia" /> <label for="diagnosis_Leukemia">Leukemia</label></li>
 								<li><input type="checkbox" name="diagnoses" id="diagnosis_Hodgkin_Lymphoma" value="Hodgkin Lymphoma" /> <label for="diagnosis_Hodgkin_Lymphoma">Hodgkin Lymphoma</label></li>
@@ -217,7 +217,7 @@
 
 									{% for goal in category.asapgoal_set.all %}
 									<li>
-										<input type="radio" name="{{ category.col_name }}" id="col{{ category.id }}_goals_{{ goal.id }}" value="col{{ category.id }}_goals_{{ goal.id }}" />
+										<input type="radio" name="{{ category.col_name }}" id="col{{ category.id }}_goals_{{ goal.id }}" value="col{{ category.id }}_goals_{{ goal.id }}" extra="{{ goal.tasktemplate.id }}" />
 										<label for="col{{ category.id }}_goals_{{ goal.id }}">{{ goal.name }}</label>
 									</li>
 									{% endfor %}
@@ -281,7 +281,7 @@
 							click here to finish signing up!
 							</div>
 
-							<input type="submit" id="finished_button" style="position: relative; top: 5px;" name="finished_button" onclick="this.disabled = true; return true;" value="Sign Me Up!" />
+							<input type="submit" id="finished_button" style="position: relative; top: 5px;" name="finished_button" value="Sign Me Up!" />
 						</div>
 					</div>
 				</div>

@@ -130,10 +130,14 @@ $(document).ready(function() {
 	
 	function updateGoalsList()
 	{
+		var goals = [];
+		
+		$("#final_goals_list li").each(function() {
+			goals.push($(this).attr("extra"));
+		})
+		
 		// updates the hidden field that POSTs the goals to the server at the end
-		$("#goals_list_hidden").val(
-			$("#final_goals_list").sortable("serialize", {'attribute': 'value', 'key': 'value'})
-		);
+		$("#goals_list_hidden").val(goals.toString());
 	}
 	
 	$("#no_goals_message").click(function() {
@@ -170,6 +174,7 @@ $(document).ready(function() {
 			// we have no item to remove, so simply append this new item
 			$("<li class='" + $(this).attr("name") + "' value='" + $(this).attr("value") + "'>" + $label.text() + "</li>")
 				.hide()
+				.attr("extra", $(this).attr("extra"))
 				.appendTo("#final_goals_list")
 				.fadeIn();
 		}
@@ -185,8 +190,6 @@ $(document).ready(function() {
 		update: function(event, ui) {
 			// ensure that the hidden element has the correct value
 			updateGoalsList();
-			
-			alert($("#goals_list_hidden").val());
 		}
 	});
 	$("#final_goals_list").disableSelection();
