@@ -82,7 +82,7 @@ $(document).ready(function() {
 								</tr>
 							{% endfor %}
 
-							{% if instance.status != "completed" %}
+							{% if instance.status != "completed" and instance.timeout_date %}
 								<tr class="state_msg"">
 									<td class="msg_label"><b>state:</b></td>
 									<td class="msg_data">
