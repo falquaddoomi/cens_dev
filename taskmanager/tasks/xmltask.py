@@ -108,7 +108,11 @@ class BaseXmlTask(BaseTask):
         # construct a default context for this evaluation
         # and add any parent context info to the dict
         if context: self.context.update(context)
-        default_context = Context({'patient': self.instance.patient, 'params': self.params})
+        default_context = Context({
+            'patient': self.instance.patient,
+            'participant': self.instance.patient.asapparticipant,
+            'params': self.params
+            })
         default_context.update(self.context)
 
         # also copy the prefix attribute (if it exists) into our machine's registered prefix
@@ -134,16 +138,19 @@ class BaseXmlTask(BaseTask):
                     # apply django's template engine to the text and send the resulting message
                     self.send(self.templatize(text, default_context), accepts_response=accepts_response)
             elif node.tag == "response":
-                if node.get('type',None) == "date_time":
-                    # it's a parsedatetime condition rather than a regex one
-                    self.conditions.append(ParseDateTimeCondition(node))
-                else:
-                    # it's a regex condition (FIXME: should be a 'regex' type)
-                    # add the condition of the response to the action queue
-                    print "--> Adding a regex condition in %s" % (top)
-                    # angle brackets are mapped to {@ and @} to get around xml's restrictions
-                    pattern = node.attrib["pattern"].replace("{@","<").replace("@}",">")
-                    self.conditions.append(RegexCondition(node, pattern))
+                # we first check to see if this can apply to us at all by evaluating the condition attribute
+                # it works just like it does for message; if it evaluates to false, this node is skipped entirely
+                if (not "condition" in node.attrib) or (self.templatize(node.attrib['condition'], default_context).strip()):
+                    if node.get('type',None) == "date_time":
+                        # it's a parsedatetime condition rather than a regex one
+                        self.conditions.append(ParseDateTimeCondition(node))
+                    else:
+                        # it's a regex condition (FIXME: should be a 'regex' type)
+                        # add the condition of the response to the action queue
+                        print "--> Adding a regex condition in %s" % (top)
+                        # angle brackets are mapped to {@ and @} to get around xml's restrictions
+                        pattern = node.attrib["pattern"].replace("{@","<").replace("@}",">")
+                        self.conditions.append(RegexCondition(node, pattern))
             elif node.tag == "timeout":
                 # gather the duration and offset, if specified
                 try:
@@ -235,6 +242,12 @@ class BaseXmlTask(BaseTask):
                 TaskInstance.objects.filter(process=self.instance.process, status="pending").delete()
                 # and immediately conclude execution
                 raise TaskCompleteException()
+            elif node.tag == "scope":
+                # immediately expands if the condition is present and evaluates to true
+                # if the condition is false, not present, or is blank, the node is ignored.
+                # it may still be useful to have scopes with constant false conditions as link targets, though
+                if ("condition" in node.attrib) and (self.templatize(node.attrib['condition'], default_context).strip()):
+                    self._exec_children(node, context)
             elif node.tag == "link":
                 # immediately expand the link with the id specified by target
                 # but first we have to find it
