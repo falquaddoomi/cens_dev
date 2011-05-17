@@ -4,4 +4,44 @@
 	<message>
 	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: Find out how to get cognitive info or support.
 	</message>
+	
+	<timeout delay="in 10 minutes" id="choose_support">
+		<message>
+		Foundation ThinkAgain provides rehab &amp;  educational therapy. Visit www.thinkagain.org, call 310-824-5696 or email Kerrigan@ThinkAgain.org 4 more info. We'll text u in a week 2 see ur progress.
+		</message>
+		
+		<timeout delay="in 7 days" id="did_you_contact">
+			<message>
+			Did u contact Foundation ThinkAgain (www.thinkagain.org)? Text YES or NO.
+			</message>
+			
+			<response pattern="yes">
+				<message>
+				How helpful was the info provided by Foundation ThinkAgain? Text: #1-5, with 1- not helpful to 5- very helpful.
+				</message>
+				
+				<response pattern=".*">
+					<alert name="Feedback">
+						<param key="task">8_Cognitive</param>
+						<param key="status">Succeeded</param>
+						<param key="response">{{ message }}</param>
+					</alert>
+
+					<message>
+					Thank u for sharing ur opinions. Congrats on completing your ASAP goal.
+					</message>
+				</response>
+			</response>
+			
+			<response pattern="no">
+				<message>
+				That's okay. We will send u a reminder text in a week.
+				</message>
+				
+				<timeout delay="in 7 days">
+					<link target="did_you_contact" />
+				</timeout>
+			</response>
+		</timeout>
+	</timeout>
 </interaction>

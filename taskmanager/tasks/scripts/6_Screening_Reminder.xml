@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 
-<interaction id="toplevel" prefix="appt">
+<interaction id="toplevel" prefix="screen">
 	<message>
 	{% load parse_date %}
-	A reminder that ur doctor appt 2 ask 4 a survivorship care plan is  {{ params.appt_date|relative_date }}. Remember 2 bring ur cancer treatment records. Reply 'cancel' if canceled. 
+	A reminder that ur appt 4 {{ params.screening }} is tomorrow {{ params.appt_date|relative_date }}. Reply 'cancel' if canceled.
 	</message>
 	
 	<response pattern="cancel">

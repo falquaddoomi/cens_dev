@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+
+<interaction id="toplevel" prefix="screen">
+	<message>
+	Did u attend ur appt for {{ params.screening }}? Reply YES or NO.
+	</message>
+	
+	<response pattern="yes">
+		<message>
+		Congrats on completing ur ASAP goal. How helpful was the info texted to you? TEXT # 1-5, with 1- not helpful to 5- very helpful.
+		</message>
+
+			
+		<response pattern=".*">
+			<alert name="Feedback">
+				<param key="task">2_SCP_Followup</param>
+				<param key="status">Completed</param>
+				<param key="response">{{ message }}</param>
+			</alert>
+
+			<message>
+			Thank you for sharing your opinions.
+			</message>
+		</response>
+	</response>	
+			
+	<response pattern="no">
+		<message>
+		Please tell us what additional info or resources you need 2 get ur late effect screening.
+		</message>
+
+		<response pattern=".*">
+			<alert name="Feedback">
+				<param key="task">6_Screening_Followup</param>
+				<param key="status">Did not Complete</param>
+				<param key="response">{{ message }}</param>
+			</alert>
+
+			<message>
+			Thank you for participating.
+			</message>
+		</response>	
+	</response>
+</interaction>

@@ -4,4 +4,90 @@
 	<message>
 	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: To read my Survivorship Care Plan to learn about my risk for late effects.
 	</message>
+	
+	<timeout delay="10 minutes" id="survivorship_plan_yet">
+		<message>
+		Hi {{ patient.first_name }}. Do u have a survivorship care plan? Text YES or NO.
+		</message>
+		
+		<response pattern="yes">
+			<message>
+			Great. Ur survivorship care plan will tell u what tests u need, how often &amp;  what doctor 2 see. Read ur survivorship care plan &amp;  we'll text u soon to see ur progress.
+			</message>
+			
+			<timeout delay="in 3 days" id="did_you_read">
+				<message>
+				Hi {{ patient.first_name }}. Did u read ur survivorship care plan? Text YES or NO.
+				</message>
+				
+				<response pattern="yes">
+					<message>
+					Great. Did u understand what late effects u r at risk 4? Text YES or NO.
+					</message>
+					
+					<response pattern="yes">
+						<message>
+						How helpful was the info texted 2 u? TEXT # 1-5, with 1- not helpful to 5- very helpful.
+						</message>
+						
+						<response pattern=".*">
+							<alert name="Feedback">
+								<param key="task">5_Read</param>
+								<param key="status">Completed</param>
+								<param key="response">{{ message }}</param>
+							</alert>
+
+							<message>
+							Thank u for sharing ur opinions. Congrats on completing ur ASAP goal.
+							</message>
+						</response>
+					</response>
+					
+					<response pattern="no">
+						<message>
+						That's ok. Ur current doctor can help u understand what late effects u may be at risk 4.  Write down ur questions &amp;  take ur survivorship care plan w/u 2 ur next doctor appt.
+						</message>
+						
+						<timeout delay="5 minutes">
+							<message>
+							How helpful was the info texted 2 u? TEXT # 1-5, with 1- not helpful to 5- very helpful.
+							</message>
+							
+							<response pattern=".*">
+								<alert name="Feedback">
+									<param key="task">5_Read</param>
+									<param key="status">Incomplete</param>
+									<param key="response">{{ message }}</param>
+								</alert>
+
+								<message>
+								Thank u for sharing ur opinions.
+								</message>
+							</response>
+						</timeout>
+					</response>
+				</response>
+
+				<response pattern="no">
+					<message>
+					That's ok. Life gets busy. We'll send u a friendly reminder in a week.
+					</message>
+					
+					<timeout delay="in 7 days">
+						<link target="did_you_read" />
+					</timeout>
+				</response>
+			</timeout>
+		</response>
+
+		<response pattern="no">
+			<message>
+			U can ask the doctor that created ur survivorship care plan to send u a copy. We'll text u in a week 2 see ur progress.
+			</message>
+			
+			<timeout delay="in 7 days">
+				<link target="survivorship_plan_yet" />
+			</timeout>
+		</response>
+	</timeout>
 </interaction>

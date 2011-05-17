@@ -4,4 +4,44 @@
 	<message>
 	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: To find out how long I'm covered under my current insurance.
 	</message>
+	
+	<timeout delay="in 10 minutes">
+		<message>
+		To learn about ur current insurance, call American Cancer Society toll free 800-227-2345 or Cancer Legal Resource Center toll free 866-843-2572.
+		</message>
+		
+		<timeout delay="in 7 days" id="did_you_contact">
+			<message>
+			Did u contact the American Cancer Society (800-227-2345) or Cancer Legal Resource Center (866-843-2572) 2 find out how long u r covered under ur current insurance?  Text YES or NO.
+			</message>
+			
+			<response pattern="yes">
+				<message>
+				How helpful was the info provided 2 u? TEXT # 1-5, with 1- not helpful to 5- very helpful. TEXT the organization you contacted before the #.
+				</message>
+				
+				<response pattern=".*">
+					<alert name="Feedback">
+						<param key="task">10_Long_Covered</param>
+						<param key="status">Succeeded</param>
+						<param key="response">{{ message }}</param>
+					</alert>
+
+					<message>
+					Thank u for sharing ur opinions. Congrats on completing your ASAP goal.
+					</message>
+				</response>
+			</response>
+			
+			<response pattern="no">
+				<message>
+				That's ok. Life gets busy. We'll send you a friendly reminder in a week.
+				</message>
+				
+				<timeout delay="in 7 days">
+					<link target="did_you_contact" />
+				</timeout>
+			</response>
+		</timeout>
+	</timeout>
 </interaction>

@@ -4,4 +4,85 @@
 	<message>
 	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: Schedule my late effect screenings.
 	</message>
+	
+	<timeout delay="in 10 minutes" id="know_screenings">
+		<message>
+		Hi {{ patient.first_name }}. Do u know what late effect screenings u need? Text YES or NO.
+		</message>
+		
+		<response pattern="yes">
+			<message>
+			Great. What late effect screening do u need 2 do first? Pick one &amp;  text us back the name of the screening u need (ex. EKG or blood test).
+			</message>
+			
+			<response pattern=".+">
+				<store key="screening" value="{{ message }}" />
+				
+				<message>
+				Hi {{ patient.first_name }}. Please call 2 schedule ur {{ message }}. After scheduling the appt, text back w/date &amp;  time (ex. 2/28/2011 @5:15 PM). We will send u text reminders 2 help u get ur late effect screening. 
+				</message>
+				
+				<response id="appt_prompt" type="date_time">
+					<message>
+					{% load parse_date %}
+					Ur appt is {{ parsed_datetime|relative_date }}. Is this correct? If so, text back "ok". If not, text back date &amp;  time again.
+					</message>
+
+					<response pattern="ok">
+						<store key="appt_date" value="{{ parsed_datetime }}" />
+
+						<message>
+						Ur appt for {{ params.screening }} is {{ params.appt_date }}. You'll be reminded the day before &amp;  morning of ur appointment.
+						</message>
+
+						<schedule task="6_Screening_Reminder" date="{{ parsed_datetime }}" offset="1 day before" />
+						<schedule task="6_Screening_Reminder" date="{{ parsed_datetime }}" offset="4 hours before" />
+						<schedule task="6_Screening_Followup" date="{{ parsed_datetime }}" offset="4 hours after" />
+					</response>
+
+					<response type="date_time">
+						<link target="appt_prompt" />
+					</response>
+
+					<!-- FIXME: what if they text back something else? -->
+				</response>
+			</response>
+		</response>
+		
+		<response pattern="no">
+			<message>
+			That's ok. Ur survivorship care plan will tell u what late effect screenings u need, how often, &amp;  what doctor 2 see. Do u have a copy of ur survivorship care plan with u? Text YES or NO.
+			</message>
+			
+			<response pattern="yes">
+				<message>
+				Great. Read ur survivorship care plan to find out what late effect screenings u need. We will text u in a week 2 see ur progress.
+				</message>
+				
+				<timeout delay="in 7 days">
+					<link target="know_screenings" />
+				</timeout>
+			</response>
+			
+			<response pattern="no">
+				<message>
+				U can ask ur doctor 2 create ur survivorship care plan or send u a copy if u have one already. Text CREATE or COPY.
+				</message>
+				
+				<response pattern="create">
+					<schedule task="2_SCP" date="in 5 minutes" />
+				</response>
+				
+				<response pattern="copy">
+					<message>
+					Contact ur doctor that created ur suvivorship care plan and request a copy.  We will text u in a week 2 see ur progress.
+					</message>
+					
+					<timeout delay="in 7 days">
+						<link target="know_screenings" />
+					</timeout>
+				</response>
+			</response>
+		</response>
+	</timeout>
 </interaction>

@@ -4,4 +4,229 @@
 	<message>
 	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: Find out how to get emotional support as a cancer survivor.
 	</message>
+	
+	<timeout delay="in 10 minutes">
+		<message>
+		What kind of support r u most interested in learning more about? Text online, peer group, or 1-on-1.
+		</message>
+		
+		<!--
+		==================================================
+		=== ONLINE RESOURCES
+		==================================================
+		-->
+		<response pattern="online" id="online_resource">
+			<store key="resource" value="{{ participant.get_online_resource.text }}" />
+			
+			<message>
+			Hi {{ patient.first_name }}. Here is an online chat forum where u can talk w/ others survivors virtually. Visit {{ params.resource }}.
+			</message>
+			
+			<timeout delay="in 5 days" id="visited_forum">
+				<message>
+				Hi {{ patient.first_name }}. Did u visit the online chat forum {{ params.resource }} 2 talk 2 survivors? Text YES or NO.
+				</message>
+				
+				<response pattern="yes">
+					<message>
+					Was the online chat forum useful?  Text YES or NO.
+					</message>
+					
+					<response pattern="yes">
+						<message>
+						Great. Would u recommend the online chat forum 2 other survivors? Text YES or NO.
+						</message>
+						
+						<response pattern=".*">
+							<alert name="Feedback">
+								<param key="task">7_Emotional</param>
+								<param key="status">Online Chat Forum Helpful?</param>
+								<param key="response">{{ message }}</param>
+							</alert>
+
+							<message>
+							Thank u 4 sharing ur opinions. Congrats on completing ur ASAP goal.
+							</message>
+						</response>
+					</response>
+					
+					<response pattern="no">
+						<message>
+						That's ok. Do u want another type of support? Text peer group, 1-on-1, or cancel.
+						</message>
+						
+						<response pattern="(peer|group)">
+							<link target="peer_group_resource" />
+						</response>
+						
+						<response pattern="(one|1).*on.*(one|1)">
+							<link target="one_on_one_resource" />
+						</response>
+						
+						<response pattern="cancel">
+							<message>
+							Thank u 4 participating.
+							</message>
+						</response>
+					</response>
+				</response>
+				
+				<response pattern="no">
+					<message>
+					That's ok. We will send u a reminder text in a week.
+					</message>
+					
+					<timeout delay="in 7 days">
+						<link target="visited_forum" />
+					</timeout>
+				</response>
+			</timeout>
+		</response>
+		
+		<!--
+		==================================================
+		=== PEER GROUP RESOURCES
+		==================================================
+		-->
+		<response pattern="(peer|group)" id="peer_group_resource">
+			<store key="resource" value="{{ participant.get_peer_resource.text }}" />
+			
+			<message>
+			Hi {{ patient.first_name }}. Here is a peer group where u can meet other survivors in person. Contact {{ params.resource }} 4 more info.
+			</message>
+			
+			<timeout delay="in 5 days" id="visited_peer_group">
+				<message>
+				Hi {{ patient.first_name }}. Did u contact the peer group {{ params.resource }}? Text YES or NO.
+				</message>
+				
+				<response pattern="yes">
+					<message>
+					Great. Do u want to participate in this peer group? Text YES or NO.
+					</message>
+					
+					<response pattern="yes">
+						<message>
+						Great. Would u recommend this peer group to other survivors? Text YES or NO.
+						</message>
+						
+						<response pattern=".*">
+							<alert name="Feedback">
+								<param key="task">7_Emotional</param>
+								<param key="status">Peer Group Helpful?</param>
+								<param key="response">{{ message }}</param>
+							</alert>
+
+							<message>
+							Thank u 4 sharing ur opinions. Congrats on completing ur ASAP goal.
+							</message>
+						</response>
+					</response>
+					
+					<response pattern="no">
+						<message>
+						That's ok. Do u want another type of support?  Text online, 1-on-1, or cancel.
+						</message>
+						
+						<response pattern="online">
+							<link target="online_resource" />
+						</response>
+						
+						<response pattern="(one|1).*on.*(one|1)">
+							<link target="one_on_one_resource" />
+						</response>
+						
+						<response pattern="cancel">
+							<message>
+							Thank u 4 participating.
+							</message>
+						</response>
+					</response>
+				</response>
+			
+				<response pattern="no">
+					<message>
+					That's ok. We will send u a reminder text in a week.
+					</message>
+					
+					<timeout delay="in 7 days">
+						<link target="visited_peer_group" />
+					</timeout>
+				</response>
+			</timeout>
+		</response>
+		
+		<!--
+		==================================================
+		=== ONE ON ONE RESOURCES
+		==================================================
+		-->
+		<response pattern="(one|1).*on.*(one|1)" id="one_on_one_resource">
+			<store key="resource" value="{{ participant.get_1on1_resource.text }}" />
+			
+			<message>
+			Hi {{ patient.first_name }}. Here is info on free 1-on-1 couseling. Contact {{ params.resource }} 4 more info.
+			</message>
+			
+			<timeout delay="in 5 days" id="visited_one_on_one">
+				<message>
+				Hi {{ patient.first_name }}. Did u contact the {{ params.resource }} for 1-on-1 counseling? Text YES or NO.
+				</message>
+				
+				<response pattern="yes">
+					<message>
+					Great. Do u want to participate in this 1-on-1 counseling? Text YES or NO.
+					</message>
+					
+					<response pattern="yes">
+						<message>
+						Great. Would u recommend this counseling to other survivors? Text YES or NO.
+						</message>
+						
+						<response pattern=".*">
+							<alert name="Feedback">
+								<param key="task">7_Emotional</param>
+								<param key="status">Peer Group Helpful?</param>
+								<param key="response">{{ message }}</param>
+							</alert>
+
+							<message>
+							Thank u 4 sharing ur opinions. Congrats on completing ur ASAP goal.
+							</message>
+						</response>
+					</response>
+					
+					<response pattern="no">
+						<message>
+						That's ok. Do u want another type of support?  Text online, peer group, or cancel.
+						</message>
+						
+						<response pattern="online">
+							<link target="online_resource" />
+						</response>
+						
+						<response pattern="(peer|group)">
+							<link target="peer_group_resource" />
+						</response>
+						
+						<response pattern="cancel">
+							<message>
+							Thank u 4 participating.
+							</message>
+						</response>
+					</response>
+				</response>
+			
+				<response pattern="no">
+					<message>
+					That's ok. We will send u a reminder text in a week.
+					</message>
+					
+					<timeout delay="in 7 days">
+						<link target="visited_one_on_one" />
+					</timeout>
+				</response>
+			</timeout>
+		</response>
+	</timeout>
 </interaction>

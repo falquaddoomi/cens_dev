@@ -5,15 +5,15 @@
 	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: To schedule your survivorship clinic appointment.
 	</message>
 
-	<timeout delay="1 hour">
+	<timeout delay="5 minutes">
 		<message>
-		Please call ur doctor 2 schedule ur survivorship clinic appt. After scheduling the appt, text back w/date & time (ex. 2/28/2011 @5:15 PM).
+		Please call ur doctor 2 schedule ur survivorship clinic appt. After scheduling the appt, text back w/date and time (ex. 2/28/2011 @5:15 PM).
 		</message>
 		
 		<response id="appt_prompt" type="date_time">
 			<message>
 			{% load parse_date %}
-			Ur appt is {{ parsed_datetime|relative_date }}. Is this correct? If so, text back "ok". If not, text back date & time again.
+			Ur appt is {{ parsed_datetime|relative_date }}. Is this correct? If so, text back "ok". If not, text back date &amp;  time again.
 			</message>
 			
 			<response pattern="ok">

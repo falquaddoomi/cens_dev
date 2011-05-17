@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<interaction id="toplevel" prefix="appt">
+<interaction id="toplevel" prefix="sched">
 	<message>
 	{% load parse_date %}
 	A reminder that ur doctor appt 2 ask 4 a survivorship care plan is  {{ params.appt_date|relative_date }}. Remember 2 bring ur cancer treatment records. Reply 'cancel' if canceled. 
@@ -13,4 +13,6 @@
 	
 		<abort scope="process" />
 	</response>
+	
+	<!-- FIXME: canvass them for notes!! -->
 </interaction>

@@ -4,4 +4,407 @@
 	<message>
 	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: Learn about physical activities to stay healthy.
 	</message>
+	
+	<timeout delay="in 10 minutes">
+		<message>
+		What kind of activities r u interested in learning more about? Text Outdoor or Indoor.
+		</message>
+
+		<!--
+		==================================================
+		=== OUTDOOR ACTIVITIES (Adults)
+		==================================================
+		-->
+		
+		<response pattern="out.*door" condition="{% participant.age >= 18 %}" id="offer_outdoor_adult">
+			<message>
+			Great. There is a free outdoor adventure program for survivors at all skill level. Would u like to learn more? Text YES or NO.
+			</message>
+			
+			<response pattern="yes">
+				<message>
+				FIRST Descents offers free weeklong kayaking &amp;  hiking trips 4 survivors. Visit www.firstdescents.org or call 303-945-2490. We'll text u in a week.
+				</message>
+				
+				<timeout delay="in 7 days" id="contacted_outdoor_adult">
+					<message>
+					Did u contact FIRST Descents (www.firstdescents.org) 2 learn about their free outdoor adventures? Text YES or NO.
+					</message>
+					
+					<response pattern="yes">
+						<message>
+						Have u signed up 4 the program? Text YES or NO.
+						</message>
+						
+						<response pattern="yes">
+							<message>
+							Great.  How helpful was the info provided by FIRST Descents? TEXT # 1-5, with 1- not helpful to 5- very helpful.
+							</message>
+							
+							<response pattern=".*">
+								<alert name="Feedback">
+									<param key="task">9_Physical</param>
+									<param key="status">Outdoor Adult Activity Helpful?</param>
+									<param key="response">{{ message }}</param>
+								</alert>
+
+								<message>
+								Great. Would u recommend FIRST Descents 2 other survivors? Text YES or NO.
+								</message>
+								
+								<response pattern=".*">
+									<alert name="Feedback">
+										<param key="task">9_Physical</param>
+										<param key="status">Outdoor Adult Activity Recommended?</param>
+										<param key="response">{{ message }}</param>
+									</alert>
+									
+									<message>
+									Thank u for sharing ur opinions. Congrats on completing ur ASAP goal.
+									</message>
+								</response>
+							</response>
+						</response>
+						
+						<response pattern="no">
+							<message>
+							Why haven't u signed up? Text Didn't like, Can't participate, Forgot or Other.
+							</message>
+							
+							<response pattern="forgot">
+								<link target="forgot_outdoor_adult" />
+							</response>
+							
+							<response pattern="(like|participate|other)">
+								<link target="reconsider_outdoor_adult" />
+							</response>
+						</response>
+					</response>
+					
+					<response pattern="no" id="forgot_outdoor_adult">
+						<message>
+						That's ok. We will send u a reminder in a week.
+						</message>
+						
+						<timeout delay="in 7 days">
+							<link target="contacted_outdoor_adult" />
+						</timeout>
+					</response>
+				</timeout>
+			</response>
+			
+			<response pattern="no" id="reconsider_outdoor_adult">
+				<message>
+				That's ok. Would u like 2 learn about a different program? Text YES or NO.
+				</message>
+				
+				<response pattern="yes">
+					<link target="offer_indoor_adult" />
+				</response>
+				
+				<response pattern="no">
+					<message>
+					Thank u 4 participating.
+					</message>
+				</response>
+			</response>
+		</response>
+		
+		<!--
+		==================================================
+		=== OUTDOOR ACTIVITIES (Non-adults)
+		==================================================
+		-->
+		<response pattern="out.*door" condition="{% participant.age < 18 %}" id="offer_outdoor_nonadult">
+			<message>
+			Great. There is a free outdoor camp for teen survivors. Would u like 2 learn more about the program? Text YES or NO.
+			</message>
+			
+			<response pattern="yes">
+				<message>
+				Camp Ronald McDonald offers free teen camps in CA. Visit www.campronaldmcdonald.org or call toll free 800-625-7295. We'll text u in a week.
+				</message>
+				
+				<timeout delay="in 7 days" id="contacted_outdoor_adult">
+					<message>
+					Did u contact Camp Ronald McDonald's (www.campronaldmcdonald.org) to learn about their free outdoor camp? Text YES or NO.
+					</message>
+					
+					<response pattern="yes">
+						<message>
+						Have u signed up 4 the program? Text YES or NO.
+						</message>
+						
+						<response pattern="yes">
+							<message>
+							Great.  How helpful was the info provided by Camp Ronald McDonald? TEXT # 1-5, with 1- not helpful to 5- very helpful.
+							</message>
+							
+							<response pattern=".*">
+								<alert name="Feedback">
+									<param key="task">9_Physical</param>
+									<param key="status">Outdoor Non-Adult Activity Helpful?</param>
+									<param key="response">{{ message }}</param>
+								</alert>
+
+								<message>
+								Great. Would you recommend Camp Ronald McDonald to other survivors?  Text YES or NO.
+								</message>
+								
+								<response pattern=".*">
+									<alert name="Feedback">
+										<param key="task">9_Physical</param>
+										<param key="status">Outdoor Non-Adult Activity Recommended?</param>
+										<param key="response">{{ message }}</param>
+									</alert>
+									
+									<message>
+									Thank u for sharing ur opinions. Congrats on completing ur ASAP goal.
+									</message>
+								</response>
+							</response>
+						</response>
+						
+						<response pattern="no">
+							<message>
+							Why haven't u signed up? Text Didn't like, Can't participate, Forgot or Other.
+							</message>
+							
+							<response pattern="forgot">
+								<link target="forgot_outdoor_nonadult" />
+							</response>
+							
+							<response pattern="(like|participate|other)">
+								<link target="reconsider_outdoor_nonadult" />
+							</response>
+						</response>
+					</response>
+					
+					<response pattern="no" id="forgot_outdoor_nonadult">
+						<message>
+						That's ok. We will send u a reminder in a week.
+						</message>
+						
+						<timeout delay="in 7 days">
+							<link target="contacted_outdoor_nonadult" />
+						</timeout>
+					</response>
+				</timeout>
+			</response>
+			
+			<response pattern="no" id="reconsider_outdoor_nonadult">
+				<message>
+				That's ok. Would u like 2 learn about a different program? Text YES or NO.
+				</message>
+				
+				<response pattern="yes">
+					<link target="offer_indoor_nonadult" />
+				</response>
+				
+				<response pattern="no">
+					<message>
+					Thank u 4 participating.
+					</message>
+				</response>
+			</response>
+		</response>
+		
+		<!--
+		==================================================
+		=== INDOOR ACTIVITIES (Adults)
+		==================================================
+		-->
+		<response pattern="in.*door" condition="{% participant.age >= 18 %}"  id="offer_indoor_adult">
+			<message>
+			Great. There are free indoor classes 4 survivors. Would u like 2 learn more? Text YES or NO.
+			</message>
+			
+			<response pattern="yes">
+				<message>
+				Cancer Support Community offers free strength training, yoga, dance and music classes.  Visit www.cancersupportcommunity.org or call toll free 888-793-9355. We'll text u in a week.
+				</message>
+				
+				<timeout delay="in 7 days" id="contacted_indoor_adult">
+					<message>
+					Did u contact the Cancer Support Community (www.cancersupportcommunity.org) 2 learn about their indoor classes?
+					</message>
+					
+					<response pattern="yes">
+						<message>
+						Have u signed up 4 a class?  Text YES or NO.
+						</message>
+						
+						<response pattern="yes">
+							<message>
+							Great.  How helpful was the info provided by Cancer Support Community? TEXT # 1-5, with 1- not helpful to 5- very helpful.
+							</message>
+							
+							<response pattern=".*">
+								<alert name="Feedback">
+									<param key="task">9_Physical</param>
+									<param key="status">Indoor Adult Activity Helpful?</param>
+									<param key="response">{{ message }}</param>
+								</alert>
+
+								<message>
+								Great. Would u recommend the Cancer Support Community 2 other survivors? Text YES or NO.
+								</message>
+								
+								<response pattern=".*">
+									<alert name="Feedback">
+										<param key="task">9_Physical</param>
+										<param key="status">Indoor Adult Activity Recommended?</param>
+										<param key="response">{{ message }}</param>
+									</alert>
+									
+									<message>
+									Thank u for sharing ur opinions. Congrats on completing ur ASAP goal.
+									</message>
+								</response>
+							</response>
+						</response>
+						
+						<response pattern="no">
+							<message>
+							Why haven't u signed up? Text Didn't like, Can't participate, Forgot or Other.
+							</message>
+							
+							<response pattern="forgot">
+								<link target="forgot_indoor_adult" />
+							</response>
+							
+							<response pattern="(like|participate|other)">
+								<link target="reconsider_indoor_adult" />
+							</response>
+						</response>
+					</response>
+					
+					<response pattern="no" id="forgot_indoor_adult">
+						<message>
+						That's ok. We will send u a reminder in a week.
+						</message>
+						
+						<timeout delay="in 7 days">
+							<link target="contacted_outdoor_adult" />
+						</timeout>
+					</response>
+				</timeout>
+			</response>
+			
+			<response pattern="no" id="reconsider_indoor_adult">
+				<message>
+				That's ok. Would u like 2 learn about a different program? Text YES or NO.
+				</message>
+				
+				<response pattern="yes">
+					<link target="offer_outdoor_adult" />
+				</response>
+				
+				<response pattern="no">
+					<message>
+					Thank u 4 participating.
+					</message>
+				</response>
+			</response>
+		</response>
+
+		<!--
+		==================================================
+		=== INDOOR ACTIVITIES (Non-adults)
+		==================================================
+		-->
+		<response pattern="in.*door" condition="{% participant.age < 18 %}" id="offer_indoor_nonadult">
+			<message>
+			Great. There are free indoor activities 4 surivors. Would u like 2 learn more? Text YES or NO.
+			</message>
+			
+			<response pattern="yes">
+				<message>
+				National Children's Leukemia Foundation offers free ninja &amp;  dance classes 4 all teen survivors. Visit www.leukemiafoundation.org or call toll free 800-448-3467. We'll text u in a week.
+				</message>
+				
+				<timeout delay="in 7 days" id="contacted_indoor_nonadult">
+					<message>
+					Did u contact the National Children's Leukemia Foundation (www.leukemiafoundation.org) 2 learn about the free ninja &amp;  dance classes?
+					</message>
+					
+					<response pattern="yes">
+						<message>
+						Have u signed up 4 a class?  Text YES or NO.
+						</message>
+						
+						<response pattern="yes">
+							<message>
+							Great.  How helpful was the info provided by the National Children's Leukemia Foundation? TEXT # 1-5, with 1- not helpful to 5- very helpful.
+							</message>
+							
+							<response pattern=".*">
+								<alert name="Feedback">
+									<param key="task">9_Physical</param>
+									<param key="status">Indoor Non-Adult Activity Helpful?</param>
+									<param key="response">{{ message }}</param>
+								</alert>
+
+								<message>
+								Great. Would u recommend the  ninja/dance classes 2 other survivors? Text YES or NO.
+								</message>
+								
+								<response pattern=".*">
+									<alert name="Feedback">
+										<param key="task">9_Physical</param>
+										<param key="status">Indoor Non-Adult Activity Recommended?</param>
+										<param key="response">{{ message }}</param>
+									</alert>
+									
+									<message>
+									Thank u for sharing ur opinions. Congrats on completing ur ASAP goal.
+									</message>
+								</response>
+							</response>
+						</response>
+						
+						<response pattern="no">
+							<message>
+							Why haven't u signed up? Text Didn't like, Can't participate, Forgot or Other.
+							</message>
+							
+							<response pattern="forgot">
+								<link target="forgot_indoor_nonadult" />
+							</response>
+							
+							<response pattern="(like|participate|other)">
+								<link target="reconsider_indoor_nonadult" />
+							</response>
+						</response>
+					</response>
+					
+					<response pattern="no" id="forgot_indoor_nonadult">
+						<message>
+						That's ok. We will send u a reminder in a week.
+						</message>
+						
+						<timeout delay="in 7 days">
+							<link target="contacted_indoor_nonadult" />
+						</timeout>
+					</response>
+				</timeout>
+			</response>
+			
+			<response pattern="no" id="reconsider_indoor_nonadult">
+				<message>
+				That's ok. Would u like 2 learn about a different program? Text YES or NO.
+				</message>
+				
+				<response pattern="yes">
+					<link target="offer_outdoor_nonadult" />
+				</response>
+				
+				<response pattern="no">
+					<message>
+					Thank u 4 participating.
+					</message>
+				</response>
+			</response>
+		</response>
+	</timeout>
 </interaction>
