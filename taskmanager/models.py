@@ -41,10 +41,10 @@ class Patient(models.Model):
         ('jabber', 'via Jabber'),
         ('irc', 'via IRC'),
     )
-    address = models.CharField(max_length=200) # phone number, but address for compatibility
-    email = models.CharField(max_length=200)
-    handle = models.CharField(max_length=100)
-    contact_pref = models.CharField(max_length=50, choices=CONTACT_PREF_CHOICES, default='sms')
+    address = models.CharField(max_length=200,unique=True) # phone number, but address for compatibility
+    email = models.CharField(max_length=200,unique=True)
+    handle = models.CharField(max_length=100,null=True,blank=True,unique=True)
+    contact_pref = models.CharField(max_length=50, choices=CONTACT_PREF_CHOICES, default='clickatell')
     first_name = models.CharField(max_length=80)
     last_name = models.CharField(max_length=80)
     clinicians = models.ManyToManyField(Clinician)

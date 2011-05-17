@@ -8,6 +8,8 @@ from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_protect
 
+from django.db import IntegrityError, transaction
+
 from taskmanager.models import *
 from ASAP.models import *
 
@@ -23,7 +25,10 @@ from taskmanager.framework import utilities
 
 @csrf_protect
 @logged_in_or_basicauth()
+@transaction.commit_on_success
 def signupform(request):
+    errors = None # initially empty; populate this if there's an issue with the submission
+    
     if request.method == 'POST': # If the form has been submitted...
         # form = ASAPParticipantForm(request.POST) # A form bound to the POST data
         # if form.is_valid(): # All validation rules pass
@@ -36,15 +41,19 @@ def signupform(request):
             processed_phone = "+1" + processed_phone
             
         # create a Patient for them, too
-        np = Patient(
-            address = processed_phone,
-            email = request.POST['email'],
-            handle = 'Escherial',
-            contact_pref = 'irc',
-            first_name = request.POST['firstname'],
-            last_name = request.POST['lastname']
-            )
-        np.save()
+        try:
+            np = Patient(
+                address = processed_phone,
+                email = request.POST['email'],
+                contact_pref = 'clickatell',
+                first_name = request.POST['firstname'],
+                last_name = request.POST['lastname']
+                )
+            np.save()
+	except IntegrityError as ex:
+            # either their address or email address is already in use...what to do?
+            raise
+		
         
         # we're assigning all ASAP signups to the ASAP Admin account
         np.clinicians.add(Clinician.objects.get(user=User.objects.get(username='asap_admin')))
@@ -68,21 +77,27 @@ def signupform(request):
             participant.diagnoses.add(Diagnosis.objects.get(proper_name=d))
         
         # finally, schedule all of their tasks to run at various times...
-        start_date = utilities.parsedt("in 5 seconds")
+        start_date = utilities.parsedt("in 5 minutes")
         
-        for goal in [int(id) for id in request.POST['goals_list_hidden'].split(',')]:
+        for goalid in [id for id in request.POST['goals_list_hidden'].split(',')]:
+            try:
+                goalid = int(goalid)
+            except ValueError:
+                # probably a 'no goal' entry, just continue
+                continue
+            
+            # get the goal
+            goal = ASAPGoal.objects.get(pk=goalid)
             # add to the patient's list of goals
-            participant.goals.add(ASAPGoal.objects.get(pk=goal))
-            # look up the template first
-            template = TaskTemplate.objects.get(pk=goal)
+            participant.goals.add(goal)
             # then create a taskinstance for this template
             TaskInstance.objects.create_task(
                 patient=np,
-                task=template.task,
-                params=template.arguments,
+                task=goal.tasktemplate.task,
+                params=goal.tasktemplate.arguments,
                 schedule_date=start_date,
                 creator="asap_admin",
-                name=template.name
+                name=goal.tasktemplate.name
                 )
             # increment the start date by 2 weeks
             start_date = utilities.parsedt("in 14 days", start_date)
@@ -93,7 +108,8 @@ def signupform(request):
 
     return render_to_response('signup.html', {
         'form': form,
-        'goal_categories': ASAPGoalCategory.objects.all()
+        'goal_categories': ASAPGoalCategory.objects.all(),
+        'errors': errors
     }, context_instance=RequestContext(request))
 
 def thanks(request):
