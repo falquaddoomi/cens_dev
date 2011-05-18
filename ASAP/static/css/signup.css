@@ -131,7 +131,7 @@ ul.checkboxlist label { display: inline; font-weight: normal; }
 = draggable list
 ===*/
 
-#final_goals_list { min-height: 130px; }
+#final_goals_list { min-height: 130px; list-style: none; }
 
 #final_goals_list li {
 	padding: 10px;
@@ -155,7 +155,7 @@ ul.checkboxlist label { display: inline; font-weight: normal; }
 	text-align: left;
 	color: #1A7420; text-decoration: none;
 	font-weight: bold; font-size: 36px;
-	background: url('/static/taskmanager/ASAP/images/pdf.png') #ddd no-repeat 10px center;
+	background: url('/static/ASAP/images/pdf.png') #ddd no-repeat 10px center;
 	
 	display: block; height: 128px;
 	padding: 20px; padding-left: 140px; padding-top: 20px;

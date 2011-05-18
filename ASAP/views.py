@@ -27,8 +27,6 @@ from taskmanager.framework import utilities
 @logged_in_or_basicauth()
 @transaction.commit_on_success
 def signupform(request):
-    errors = None # initially empty; populate this if there's an issue with the submission
-    
     if request.method == 'POST': # If the form has been submitted...
         # form = ASAPParticipantForm(request.POST) # A form bound to the POST data
         # if form.is_valid(): # All validation rules pass
@@ -108,12 +106,29 @@ def signupform(request):
 
     return render_to_response('signup.html', {
         'form': form,
-        'goal_categories': ASAPGoalCategory.objects.all(),
-        'errors': errors
+        'goal_categories': ASAPGoalCategory.objects.all()
     }, context_instance=RequestContext(request))
 
 def thanks(request):
     return render_to_response('thanks.html', {}, context_instance=RequestContext(request))
+
+# ajax checking routines
+
+@csrf_protect
+def checkphone(request):
+    result = False
+    if 'cellphone' in request.GET:
+        result = 'number already in use' if Patient.objects.filter(address__iendswith=request.GET['cellphone']).exists() else True
+        
+    return HttpResponse(json.dumps(result), mimetype='application/javascript')
+
+@csrf_protect
+def checkemail(request):
+    result = False
+    if 'email' in request.GET:
+        result = 'email already in use' if Patient.objects.filter(email=request.GET['email']).exists() else True
+        
+    return HttpResponse(json.dumps(result), mimetype='application/javascript')
 
 # =============================================
 # ASAP has a few models it needs to run, detailed here

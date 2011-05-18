@@ -10,5 +10,7 @@ urlpatterns = patterns('',
     # ASAP forms
     # ================================
     (r'^signup/?$', ASAP.views.signupform),
-    (r'^thanks/?$', ASAP.views.thanks)
+    (r'^thanks/?$', ASAP.views.thanks),
+    (r'^checkphone/?$', ASAP.views.checkphone),
+    (r'^checkemail/?$', ASAP.views.checkemail)
 )

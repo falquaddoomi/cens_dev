@@ -46,8 +46,8 @@
 				rules: {
 					"firstname":	{ required: true },
 					"lastname":		{ required: true },
-					"cellphone":	{ required: true, digits: true },
-					"email":		{ required: true, email: true }
+					"cellphone":	{ required: true, digits: true, minlength: 2, remote: "/ASAP/checkphone" },
+					"email":		{ required: true, email: true, minlength: 2, remote: "/ASAP/checkemail" }
 				}
 			});
 
@@ -255,8 +255,7 @@
 							please select at least one goal from the list above to continue!
 							</div>
 
-							<ol id="final_goals_list">
-							</ol>
+							<ol id="final_goals_list"></ol>
 
 							<input type="hidden" id="goals_list_hidden" name="goals_list_hidden" value="" />
 						</div>

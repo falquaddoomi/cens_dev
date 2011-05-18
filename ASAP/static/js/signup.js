@@ -53,6 +53,9 @@ $(document).ready(function() {
 			$(".floater").fadeTo(0, 0, function() {
 				$(this).fadeTo(400, 1);
 			});
+			
+			// and scroll back up to this section
+			$.scrollTo("#step1", { duration: 600, axis: 'y' });
 		}
 		
 		return false;
