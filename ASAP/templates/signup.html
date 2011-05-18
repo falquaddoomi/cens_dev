@@ -50,6 +50,9 @@
 					"email":		{ required: true, email: true }
 				}
 			});
+
+			// if there are server-side errors, we need to display the
+			// sign-up form step populated with their values
 		});
 		</script>
 	</head>
@@ -217,7 +220,7 @@
 
 									{% for goal in category.asapgoal_set.all %}
 									<li>
-										<input type="radio" name="{{ category.col_name }}" id="col{{ category.id }}_goals_{{ goal.id }}" value="col{{ category.id }}_goals_{{ goal.id }}" extra="{{ goal.tasktemplate.id }}" />
+										<input type="radio" name="{{ category.col_name }}" id="col{{ category.id }}_goals_{{ goal.id }}" value="col{{ category.id }}_goals_{{ goal.id }}" extra="{{ goal.id }}" />
 										<label for="col{{ category.id }}_goals_{{ goal.id }}">{{ goal.name }}</label>
 									</li>
 									{% endfor %}

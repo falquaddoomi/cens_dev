@@ -105,7 +105,7 @@ $(document).ready(function() {
 		// update the status of the "no goals" message after every selection
 		if ($(".goal_container input:radio").filter(":checked").not("[value='']").length > 0)
 		{
-			console.log("items: ",$(".goal_container input:radio").filter(":checked").not("[value='']").length);
+			// console.log("items: ",$(".goal_container input:radio").filter(":checked").not("[value='']").length);
 			
 			$("#no_goals_message").fadeOut(300);
 			return true;
@@ -140,6 +140,8 @@ $(document).ready(function() {
 		$("#goals_list_hidden").val(goals.toString());
 	}
 	
+	// handles the "no goals selected" message when no goals are selected taking you
+	// back up to the section where you can select some goals
 	$("#no_goals_message").click(function() {
 		$.scrollTo("#step2", { duration: 600, axis: 'y', offset: { left: 0, top: -10 } });
 	});
@@ -162,8 +164,9 @@ $(document).ready(function() {
 		else if ($removingItem.length > 0) {
 			// we actually have an item to remove, so remove it and insert the new one after
 			// insert the new item after the current one, then remove the current one
-			$("<li class='" + $(this).attr("name") + "'>" + $label.text() + "</li>")
+			$("<li class='" + $(this).attr("name") + "' value='" + $(this).attr("value") + "'>" + $label.text() + "</li>")
 				.hide()
+				.attr("extra", $(this).attr("extra"))
 				.insertAfter($removingItem)
 				.fadeIn();
 
