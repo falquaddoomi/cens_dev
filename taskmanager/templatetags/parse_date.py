@@ -6,6 +6,8 @@ import parsedatetime.parsedatetime_consts as pdc
 from django.template import Library
 from django.template.defaultfilters import stringfilter
 
+from taskmanager.framework.utilities import parsedt
+
 register = Library()
 
 @register.filter(name='parse_date')
@@ -37,22 +39,27 @@ def relative_date(date_string):
     """
 
     try:
-        # attempt to parse the input with parsedatetime
-        p = pdt.Calendar()
-        result = p.parse(date_string)
-        date = datetime.datetime.fromtimestamp(time.mktime(result[0]))
+        # attempt to parse it in the super-wonky way that django passes
+        # dates to filters (e.g. not as nice text, sadly)
+        thedate = datetime.datetime.strptime(date_string.partition('.')[0], "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        # now that we've exhausted our best effort, let's try the next one
+        thedate = parsedt(date_string)
+        
+    try:
         # actually gets the time it was this morning
         rightnow = datetime.datetime.combine(datetime.datetime.now(), datetime.time.min)
-        diff = date - rightnow
+        # and compute the difference so we can give relative dates
+        diff = thedate - rightnow
     except:
         # any exception here should return nothing
         return None
 
     if diff.days == 0: # Today
-        return 'today @' + date.strftime("%-I:%M %p (%m/%d/%Y)") ## at 05:45 PM
+        return 'today @' + thedate.strftime("%-I:%M %p (%m/%d/%Y)") ## at 05:45 PM
     elif diff.days == 1: # Tomorrow
-        return 'tomorrow @' + date.strftime("%-I:%M %p (%m/%d/%Y)") ## at 05:45 PM Tomorrow
+        return 'tomorrow @' + thedate.strftime("%-I:%M %p (%m/%d/%Y)") ## at 05:45 PM Tomorrow
     elif diff.days < 7: # one week from now
-        return date.strftime("%A at %-I:%M %p (%m/%d/%Y)") ## at 05:45 PM Tuesday
+        return thedate.strftime("%A at %-I:%M %p (%m/%d/%Y)") ## at 05:45 PM Tuesday
     else:
-        return 'on ' + date.strftime("%m/%d/%Y") ## on 10/03/1980
+        return 'on ' + thedate.strftime("%m/%d/%Y") ## on 10/03/1980
