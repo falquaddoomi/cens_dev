@@ -13,8 +13,6 @@ import taskmanager.subviews.contexts.patients as contexts_patients
 import taskmanager.subviews.contexts.tasks as contexts_tasks
 import taskmanager.subviews.contexts.monitor as contexts_monitor
 
-import taskmanager.subviews.ASAP as ASAP
-
 urlpatterns = patterns('',
     (r'^$', dashboard.default), # redirects to their last-viewed context (or 'patients' if none)
     (r'^login$', login.prompt_login),
@@ -73,10 +71,5 @@ urlpatterns = patterns('',
     (r'^tasks/(?P<instanceid>\d+)/command/?$', details.taskinstance_command),
 
     # AJAX proxy
-    (r'^proxy/(?P<url>.+)$', views.proxy),
-
-    # ================================
-    # ASAP forms
-    # ================================
-    (r'^ASAP/signup/?$', ASAP.signupform),
+    (r'^proxy/(?P<url>.+)$', views.proxy)
 )

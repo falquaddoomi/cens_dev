@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+	</head>
+
+	<body>
+		<h1>Testing</h1>
+
+		<form method="POST" action=".">
+			{% csrf_token %}
+
+			<b>Input Date:</b> <input type="text" name="incoming_datetime" value="{{ incoming_datetime_out }}" /> <input type="submit" value="Submit" />
+		</form>
+
+		<div>
+			{% load parse_date %}
+			<b>Output Date:</b> {{ parsed_datetime }}<br /><br />
+
+			<b>Message:</b><br />
+			Ur appt is {{ parsed_datetime|relative_date }}. Is this correct? If so, text back "ok". If not, text back date &amp;  time again.
+		</div>
+	</body>
+</html>

@@ -3,6 +3,9 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from django.template import RequestContext
 
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_protect
+
 # generalization of AJAX proxying code from AJAX module
 import urllib, urllib2
 def proxy(request, url):
@@ -39,3 +42,16 @@ def proxy(request, url):
     # whatever happend during the subrequest, we
     # must return a response to *this* request
     return HttpResponse(out, status=code, content_type=ct)
+
+from taskmanager.framework.utilities import parsedt
+
+@csrf_protect
+def pdtest(request):
+    fieldvars = {}
+
+    if 'incoming_datetime' in request.POST:
+        # attempt to parse it
+        fieldvars['incoming_datetime_out'] = request.POST['incoming_datetime']
+        fieldvars['parsed_datetime'] = parsedt(request.POST['incoming_datetime'])
+    
+    return render_to_response('pdtest.html', fieldvars, context_instance=RequestContext(request))
