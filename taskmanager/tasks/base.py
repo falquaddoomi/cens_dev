@@ -85,15 +85,16 @@ class BaseTask(object):
     # ==========================
     
     def __getstate__(self):
-        odict = self.__dict__.copy() # copy the dict since we change it
-        # replace instance with its id
-        odict['instance'] = self.instance.id
-        # remove the dispatch reference
+        info = self.__dict__.copy() # copy the dict since we change it
+        # store instance id
+        info['instanceid'] = self.instance.id
+        # remove the dispatch and instance reference
         # this will have to be manually reassociated
-        del odict['dispatch']
-        return odict
+        del info['dispatch']
+        del info['instance']
+        return info
 
-    def __setstate__(self, dict):
-        # replace instance id with the actual instance
-        self.instance = TaskInstance.objects.get(pk=dict['instance'])
-        self.__dict__.update(dict)   # update attributes
+    def __setstate__(self, info):
+        # load up instance id from our saved instanceid
+        self.instance = TaskInstance.objects.get(pk=info['instanceid'])
+        self.__dict__.update(info)   # update attributes

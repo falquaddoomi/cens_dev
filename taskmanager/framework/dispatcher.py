@@ -273,6 +273,7 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
             # pickle the machine into its instance
             item['instance'].machine_data = pickle.dumps(item['machine'])
             item['instance'].save()
+            self.info("Pickled machine %s from instance ID %d" % (item['instance'].name, item['instance'].id))
 
     def thaw(self):
         """
@@ -284,7 +285,7 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
         for instance in TaskInstance.objects.filter(status="running",machine_data__isnull=False):
             try:
                 # unpickle the machine into the dispatch table
-                machine = pickle.loads(instance.machine_data)
+                machine = pickle.loads(str(instance.machine_data))
                 # reassociate the dispatch, since this is something that couldn't be pickled
                 machine.dispatch = self
                 self.dispatch[instance.id] = {
@@ -299,6 +300,7 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
             except Exception as e:
                 # hmm, i guess we should just keep moving on
                 # but i wonder if we should remove the task? or at least error it out?
+                self.info("ERROR: unable to unpickle machine %s from instance ID %d" % (instance.name, instance.id))
                 instance.mark_errored("Unable to unpickle associated machine from the machine_data field: %s" % (str(e)))
 
     # ==============================
