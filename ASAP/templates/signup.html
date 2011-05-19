@@ -46,13 +46,10 @@
 				rules: {
 					"firstname":	{ required: true },
 					"lastname":		{ required: true },
-					"cellphone":	{ required: true, digits: true, minlength: 2, remote: "/ASAP/checkphone" },
-					"email":		{ required: true, email: true, minlength: 2, remote: "/ASAP/checkemail" }
+					"cellphone":	{ required: true, digits: true, remote: "/ASAP/checkphone" },
+					"email":		{ required: true, email: true, remote: "/ASAP/checkemail" }
 				}
 			});
-
-			// if there are server-side errors, we need to display the
-			// sign-up form step populated with their values
 		});
 		</script>
 	</head>
