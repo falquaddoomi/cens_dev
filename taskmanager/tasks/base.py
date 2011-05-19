@@ -1,5 +1,7 @@
 import json
 
+from taskmanager.models import TaskInstance
+
 # signifies that our task is done to the dispatcher
 # the dispatch should remove us when it receives this
 class TaskCompleteException(Exception):
@@ -77,3 +79,21 @@ class BaseTask(object):
         can stop waiting for a reply and perform whatever actions are appropriate.
         """
         pass
+
+    # ==========================
+    # == pickler functions
+    # ==========================
+    
+    def __getstate__(self):
+        odict = self.__dict__.copy() # copy the dict since we change it
+        # replace instance with its id
+        odict['instance'] = self.instance.id
+        # remove the dispatch reference
+        # this will have to be manually reassociated
+        del odict['dispatch']
+        return odict
+
+    def __setstate__(self, dict):
+        # replace instance id with the actual instance
+        self.instance = TaskInstance.objects.get(pk=dict['instance'])
+        self.__dict__.update(dict)   # update attributes

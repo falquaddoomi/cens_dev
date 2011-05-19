@@ -7,7 +7,7 @@ and then which task for that user the message is intended for,
 and will invoke the handle() event on that task instance.
 """
 
-import json, string
+import json, string, pickle
 from django.db.models import Count
 
 from collections import defaultdict
@@ -96,7 +96,7 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
             else:
                 # unrecognizable backend...what now?
                 raise Exception("Unrecognizable backend")
-        except NameError as e:
+        except Patient.DoesNotExist:
             msg.respond("You're not a recognized user")
             return False
         except Exception as e:
@@ -260,6 +260,48 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
             dispatcher.removetask(instance)
 
     # ==============================
+    # == persistent state management
+    # ==============================
+
+    def freeze(self):
+        """
+        Attempts to pickle and store the machine instances
+        from the dispatch table into their respective TaskInstances.
+        Called prior to the router shutting down.
+        """
+        for item in self.dispatch.itervalues():
+            # pickle the machine into its instance
+            item['instance'].machine_data = pickle.dumps(item['machine'])
+            item['instance'].save()
+
+    def thaw(self):
+        """
+        Scans the TaskInstances for running processes with machine_data
+        and attempts to unpickle them into the dispatch table. The
+        machine_data is cleared afterward in order to prevent it from
+        being possibly restored twice.
+        """
+        for instance in TaskInstance.objects.filter(status="running",machine_data__isnull=False):
+            try:
+                # unpickle the machine into the dispatch table
+                machine = pickle.loads(instance.machine_data)
+                # reassociate the dispatch, since this is something that couldn't be pickled
+                machine.dispatch = self
+                self.dispatch[instance.id] = {
+                    'instance': instance,
+                    'machine': machine
+                }
+                # clear the pickled data and save()
+                instance.machine_data = None
+                instance.save()
+                # and tell our parent about this
+                self.info("Unpickled machine %s from instance ID %d" % (instance.name, instance.id))
+            except Exception as e:
+                # hmm, i guess we should just keep moving on
+                # but i wonder if we should remove the task? or at least error it out?
+                instance.mark_errored("Unable to unpickle associated machine from the machine_data field: %s" % (str(e)))
+
+    # ==============================
     # == helpers for dealing with incoming and outgoing messages
     # ==============================
 
@@ -277,7 +319,7 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
             message += ' Type "%s" before your reply.' % self.dispatch[instance.id]['machine'].prefix
         # and send the message, finally
         LogMessage(instance=instance, message=message, outgoing=True).save()
-        self.app.send(instance.patient.get_address(), message, identityType=instance.mode)
+        self.app.send(instance.patient.get_address(), message, identityType=instance.patient.contact_pref)
 
     def get_dispatch_table(self):
         """

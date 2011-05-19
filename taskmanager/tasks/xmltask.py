@@ -10,6 +10,9 @@ from base import BaseTask, TaskCompleteException
 from taskmanager.models import LogMessage, TaskTemplate, TaskInstance, Alert
 from taskmanager.framework import utilities
 
+# for the FORCE_TIMEOUT_DELAY override for testing
+import settings
+
 class BaseXmlTask(BaseTask):
     def __init__(self, dispatch, instance):
         super(BaseXmlTask, self).__init__(dispatch, instance)
@@ -34,7 +37,8 @@ class BaseXmlTask(BaseTask):
         print "Beginning execution of %s!" % (self.params['script'])
         
         # read the first-level element (ostensibly interaction)
-        self.tree = etree.parse(os.path.join(os.path.dirname(__file__), "scripts", self.params['script']))
+        self.scriptpath = os.path.join(os.path.dirname(__file__), "scripts", self.params['script'])
+        self.tree = etree.parse(self.scriptpath)
         interaction = self.tree.getroot()
         # grab some top-level params which apply to the entire task (unless overridden by a composite tag)
         self.prefix = interaction.get("prefix")
@@ -53,8 +57,10 @@ class BaseXmlTask(BaseTask):
             if condition.satisfied(msg=message):
                 # log it!
                 LogMessage(instance=self.instance, message=message.text, outgoing=False).save()
+                # look up the node to expand
+                node = self.tree.xpath(condition.path)[0]
                 # and expand the node associated with this condition
-                self._exec_children(condition.node, condition.context)
+                self._exec_children(node, condition.context)
                 return True
 
         # nothing matched; let's tell our caller that
@@ -72,8 +78,10 @@ class BaseXmlTask(BaseTask):
         for condition in [c for c in self.conditions if c.eventtype == "time"]:
             # determine if the condition applies to the current situation
             if condition.satisfied():
+                # look up the node to expand
+                node = self.tree.xpath(condition.path)[0]
                 # expand the node associated with this condition
-                self._exec_children(condition.node, condition.context)
+                self._exec_children(node, condition.context)
                 return True
 
         # nothing matched; let's tell our caller that
@@ -143,14 +151,14 @@ class BaseXmlTask(BaseTask):
                 if (not "condition" in node.attrib) or (self.templatize(node.attrib['condition'], default_context).strip()):
                     if node.get('type',None) == "date_time":
                         # it's a parsedatetime condition rather than a regex one
-                        self.conditions.append(ParseDateTimeCondition(node))
+                        self.conditions.append(ParseDateTimeCondition(self.tree.getpath(node)))
                     else:
                         # it's a regex condition (FIXME: should be a 'regex' type)
                         # add the condition of the response to the action queue
                         print "--> Adding a regex condition in %s" % (top)
                         # angle brackets are mapped to {@ and @} to get around xml's restrictions
                         pattern = node.attrib["pattern"].replace("{@","<").replace("@}",">")
-                        self.conditions.append(RegexCondition(node, pattern))
+                        self.conditions.append(RegexCondition(self.tree.getpath(node), pattern))
             elif node.tag == "timeout":
                 # gather the duration and offset, if specified
                 try:
@@ -160,13 +168,17 @@ class BaseXmlTask(BaseTask):
                 except KeyError as ex:
                     raise XMLFormatException("%s node expects attribute '%s'" % (node.tag, ex.args[0]))
 
-                # FIXME: temporarily overriding the triggerdate to be 2 minutes
-                # for the sake of the demo
-                # triggerdate = utilities.parsedt("in 30 seconds")
+                # FIXME: allows temporary override of the timeout duration for testing
+                try:
+                    if settings.FORCE_TIMEOUT_DELAY:
+                        triggerdate = utilities.parsedt(settings.FORCE_TIMEOUT_DELAY)
+                except NameError:
+                    # we don't need to do anything; we just assume the setting wasn't set
+                    pass
         
                 # add the condition of the response to the action queue
                 print "--> Adding a timeout condition in %s" % (top)
-                self.conditions.append(TimeoutCondition(node, triggerdate))
+                self.conditions.append(TimeoutCondition(self.tree.getpath(node), triggerdate))
 
                 # and register us as requiring a timeout
                 # only replace the timeout if the new one is more recent than the existing one
@@ -219,8 +231,35 @@ class BaseXmlTask(BaseTask):
                 # store these to the persistent params collection and save it
                 p = json.loads(self.instance.params)
                 p[key] = value
+                
+                # and don't forget to update the context, too!
+                default_context['params'] = p
+
+                # finally, save it all back to the db
                 self.instance.params = json.dumps(p)
                 self.instance.save()
+            elif node.tag == "unstore":
+                # gather the key and value
+                try:
+                    key = node.attrib['key']
+                except KeyError as ex:
+                    raise XMLFormatException("%s node expects attribute '%s'" % (node.tag, ex.args[0]))
+
+                print "--> Unstoring key '%s'" % (key)
+
+                # store these to the persistent params collection and save it
+                try:
+                    p = json.loads(self.instance.params)
+                    del p[key]
+                    # and don't forget to update the context, too!
+                    default_context['params'] = p
+
+                    # finally, save it all back to the db
+                    self.instance.params = json.dumps(p)
+                    self.instance.save()
+                except:
+                    # not sure what to do here
+                    self.info("Unable to unstore key '%s' from parameters collection" % (key))
             elif node.tag == "alert":
                 # gather the key and value
                 try:
@@ -282,14 +321,45 @@ class BaseXmlTask(BaseTask):
 
     # FAISAL: TBD
 
+    # ==========================
+    # == pickler functions
+    # ==========================
+    
+    def __getstate__(self):
+        # first grab the parent's state
+        info = super(BaseXmlTask, self).__getstate__()
+        # grab our own info
+        my_info = self.__dict__.copy() # copy the dict since we change it
+        # update info with our own stuff
+        info.update(my_info)
+
+        # remove things that can't be serialized here
+        # we'll have to figure out how to get the parents'
+        # removals into this list, or perhaps we should
+        # just add the things we know we need?
+        
+        # remove the tree reference
+        # this will have to be manually reassociated
+        del info['tree']
+        # FIXME: kill the dispatch and instance attributes
+        del info['dispatch']
+        del info['instance']
+        
+        return info
+
+    def __setstate__(self, info):
+        # allow our parents' state to repopulate
+        super(BaseXmlTask, self).__setstate__(info)
+        # reload the tree from the disk using the scriptpath
+        self.tree = etree.parse(info['scriptpath'])
+        self.__dict__.update(info)   # update attributes
+
 # ==============================================================
 # === exception classes
 # ==============================================================
 
 class XMLFormatException(Exception):
-    def __init__(self, message):
-        super(XMLFormatException).__init__(message=message)
-
+    pass
 
 # ==============================================================
 # === condition classes
@@ -301,16 +371,16 @@ class Condition(object):
     contains the results of the condition being satisfied.
     """
 
-    def __init__(self, node):
-        self.node = node
+    def __init__(self, path):
+        self.path = path
         self.context = {}
 
     def satisfied(self, **kwargs):
         return False
 
 class ParseDateTimeCondition(Condition):
-    def __init__(self, node):
-        super(ParseDateTimeCondition, self).__init__(node)
+    def __init__(self, path):
+        super(ParseDateTimeCondition, self).__init__(path)
         self.eventtype = "message"
 
     def satisfied(self, **kwargs):
@@ -333,8 +403,8 @@ class ParseDateTimeCondition(Condition):
         return True
 
 class RegexCondition(Condition):
-    def __init__(self, node, pattern):
-        super(RegexCondition, self).__init__(node)
+    def __init__(self, path, pattern):
+        super(RegexCondition, self).__init__(path)
         self.context['pattern'] = pattern
         self.expr = re.compile(pattern, flags=re.IGNORECASE)
         self.eventtype = "message"
@@ -356,8 +426,8 @@ class RegexCondition(Condition):
         return True
 
 class TimeoutCondition(Condition):
-    def __init__(self, node, triggerdate):
-        super(TimeoutCondition, self).__init__(node)
+    def __init__(self, path, triggerdate):
+        super(TimeoutCondition, self).__init__(path)
         self.triggerdate = triggerdate
         self.context['triggerdate'] = triggerdate
         self.eventtype = "time"

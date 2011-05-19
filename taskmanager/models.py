@@ -314,11 +314,16 @@ class TaskInstance(models.Model):
 
     # current state of the task
     status = models.CharField(max_length=100, default="pending", choices=STATUS_CHOICES)
-    details = models.CharField(max_length=800,blank=True,null=True)
+    details = models.CharField(max_length=1800,blank=True,null=True)
     
     # state information for the task
     params = models.TextField(blank=True) # filled in from TaskTemplate, persistent
     context = models.TextField(blank=True) # managed by task, possibly non-persistent
+
+    # machine data, which may or may not be present
+    # used for pickling/unpickling, as inelegant as this may be
+    # (please note that this is only non-null between router runs)
+    machine_data = models.TextField(null=True,blank=True)
     
     # state change times
     # past tense dates are dates that are set when they occur

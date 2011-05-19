@@ -29,6 +29,17 @@ class App(rapidsms.apps.base.AppBase):
         # to route messages to the list of taskinstances/machines it maintains
         self.dispatch = dispatcher.TaskDispatcher(self)
 
+        # and restore any previously serialized machines
+        # for which we had associated taskinstances that are still running
+        self.dispatch.thaw()
+
+    def stop(self):
+        self.debug("TaskManager App :: stop() invoked, cleaning up...")
+
+        # tell the dispatcher to pickle all of its machines
+        # into their associated instances and save them
+        self.dispatch.freeze()
+
     def handle(self, message):
         self.debug('in App.handle(): message type: %s, message.text: %s', type(message),  message.text)
 
@@ -104,54 +115,3 @@ class App(rapidsms.apps.base.AppBase):
             self.debug('sent message.text: %s', text)
         # except Exception as e:
         #    self.debug('problem sending outgoing message: createdbkend?:%s; createdconn?:%s; exception: %s', createdbkend, createdconn, e)
-
-    # **** FAISAL: below are from the old app.py, left as an example of using RapidSMS's short-term event scheduler
-
-    # schedules reminder to respond messages
-    def schedule_response_reminder(self, d):
-        self.debug('in App.schedulecallback(): self.router: %s', self.router)
-        cb = d.pop('callback')
-        m = d.pop('minutes')
-        reps = d.pop('repetitions')
-        self.debug('callback:%s; minutes:%s; repetitions:%s; kwargs:%s',cb,m,reps,d)
-        
-        t = datetime.now()
-        s = timedelta(minutes=m)
-    
-        # for n in [(t + 1*s), (t + 2*s), ... (t + r+s)], where r goes from [1, reps+1)
-        #for st in [t + r*s for r in range(1,reps+1)]:
-        # MLL: Changed to do one at a time, so resend will schedule the next one
-        schedule = EventSchedule(callback=cb, minutes=ALL, callback_kwargs=d, start_time=t+s, count=1)
-        schedule.save()
-        self.debug('scheduling a reminder to fire after %s at %s, id=%d', s, s+t, schedule.id)
-
-    def clear_response_reminder(self, tnsid, identity):
-        # anytime we want to clear out pending timeouts, this will deactivate them
-        self.debug('in App.clear_response_reminder(): looking to deactivate tnsid: %s, indetity: %s', tnsid, identity)
-        clearlist = []
-        for es in EventSchedule.objects.filter(active=True):
-            checkdict = es.callback_kwargs
-            if checkdict['tnsid'] == tnsid and checkdict['identity'] == identity:
-                self.debug('deactivating %i %i', es.id, es.pk)
-                es.active=False
-                es.save()
-        # tried to make this do es.delete() but it did not seem to work!
-
-
-        
-# FAISAL: ??? no idea what this does, but it looks important
-
-def callresend(router, **kwargs):
-    from datetime import datetime
-    
-    app = router.get_app('taskmanager')
-    assert (app.router==router)
-    
-    app.debug('found app/taskmanager:%s', app)
-    app.debug('%s', datetime.now())
-    app.debug('router: %s; received: kwargs:%s' % (router, kwargs))
-
-    # rapidsms.contrib.scheduler marks each entry with EventSchedule.active=0 after it's fired.
-    #app.resend(kwargs['msgid'], kwargs['identity'])
-    #app.resend(kwargs['tnsid'], kwargs['identity'])
-    app.tm.handle_timeout(kwargs['tnsid'], kwargs['identity'])

@@ -23,6 +23,10 @@ import json, urllib
 from toolbox.basicauth import logged_in_or_basicauth
 from taskmanager.framework import utilities
 
+# for configuring the timeouts
+# via ASAP_INITIAL_GOAL_DELAY and ASAP_BETWEEN_GOALS_DELAY
+import settings
+
 @csrf_protect
 @logged_in_or_basicauth()
 @transaction.commit_on_success
@@ -75,7 +79,7 @@ def signupform(request):
             participant.diagnoses.add(Diagnosis.objects.get(proper_name=d))
         
         # finally, schedule all of their tasks to run at various times...
-        start_date = utilities.parsedt("in 5 minutes")
+        start_date = utilities.parsedt(settings.ASAP_INITIAL_GOAL_DELAY)
         
         for goalid in [id for id in request.POST['goals_list_hidden'].split(',')]:
             try:
@@ -98,7 +102,7 @@ def signupform(request):
                 name=goal.tasktemplate.name
                 )
             # increment the start date by 2 weeks
-            start_date = utilities.parsedt("in 14 days", start_date)
+            start_date = utilities.parsedt(settings.ASAP_BETWEEN_GOALS_DELAY, start_date)
             
         return HttpResponseRedirect('/ASAP/thanks/') # Redirect after POST
     else:
