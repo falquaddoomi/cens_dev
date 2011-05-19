@@ -60,6 +60,6 @@ def relative_date(date_string):
     elif diff.days == 1: # Tomorrow
         return 'tomorrow @' + thedate.strftime("%-I:%M %p (%m/%d/%Y)") ## at 05:45 PM Tomorrow
     elif diff.days < 7: # one week from now
-        return thedate.strftime("%A at %-I:%M %p (%m/%d/%Y)") ## at 05:45 PM Tuesday
+        return thedate.strftime("%A @%-I:%M %p (%m/%d/%Y)") ## at 05:45 PM Tuesday
     else:
         return 'on ' + thedate.strftime("%m/%d/%Y") ## on 10/03/1980
