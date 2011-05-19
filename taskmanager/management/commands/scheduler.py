@@ -7,19 +7,24 @@ from stringprod import StringProducer
 import urllib, urlparse
 
 import sys, json
-from datetime import datetime
+import datetime
 
 from django.core.management.base import BaseCommand, CommandError
-from taskmanager.models import *
+from taskmanager.models import TaskInstance
 from django.db.models import Q
 
 from django.conf import settings
 
+if not settings.SCHEDULER_QUIET_HOURS is None:
+    QUIET_START_TIME = datetime.time(settings.SCHEDULER_QUIET_HOURS['start'])
+    QUIET_END_TIME = datetime.time(settings.SCHEDULER_QUIET_HOURS['end'])
+
 # used by check_schedule() to determine if it can send tasks
 # and by showJSONStatus() to let the interface know we're sleeping
 def isQuietHours():
-    return (not settings.SCHEDULER_QUIET_HOURS is None) and (datetime.now().hour >= settings.SCHEDULER_QUIET_HOURS['start'] or datetime.now().hour <= settings.SCHEDULER_QUIET_HOURS['end'])
-
+    global QUIET_START_TIME, QUIET_END_TIME
+    rightnow = datetime.datetime.now().time()
+    return (not settings.SCHEDULER_QUIET_HOURS is None) and (rightnow >= QUIET_START_TIME or rightnow <= QUIET_END_TIME)
 
 # =========================================================================================
 # === HTTP interface definition
@@ -132,13 +137,14 @@ def check_schedule():
     # before we do anything, make sure it's not "quiet hours"
     # if it is, do nothing and run this method later
     if isQuietHours():
+        global QUIET_START_TIME, QUIET_END_TIME
         # check again in 30 minutes...this is kind of silly, but hey
-        print "*** Quiet hours are in effect (%d:00 to %d:00, currently: %d:00), calling again in 30 minutes..." % (
-            settings.SCHEDULER_QUIET_HOURS['start'],
-            settings.SCHEDULER_QUIET_HOURS['end'],
-            datetime.now().hour
+        print "*** Quiet hours are in effect (%d:00 to %d:00, currently: %s), calling again in 10 minutes..." % (
+            QUIET_START_TIME.hour,
+            QUIET_END_TIME.hour,
+            datetime.datetime.now().strftime("%H:%M")
         )
-        reactor.callLater(60*30, check_schedule)
+        reactor.callLater(60*10, check_schedule)
         return
     
     instances = TaskInstance.objects.get_due_tasks()
@@ -175,6 +181,19 @@ def check_schedule():
     reactor.callLater(settings.SCHEDULER_CHECK_INTERVAL, check_schedule)
 
 def check_timeouts():
+    # before we do anything, make sure it's not "quiet hours"
+    # if it is, do nothing and run this method later
+    if isQuietHours():
+        global QUIET_START_TIME, QUIET_END_TIME
+        # check again in 30 minutes...this is kind of silly, but hey
+        print "*** Quiet hours are in effect (%d:00 to %d:00, currently: %s), calling again in 10 minutes..." % (
+            QUIET_START_TIME.hour,
+            QUIET_END_TIME.hour,
+            datetime.datetime.now().strftime("%H:%M")
+        )
+        reactor.callLater(60*10, check_timeouts)
+        return
+    
     instances = TaskInstance.objects.get_timedout_tasks()
     
     for instance in instances:
