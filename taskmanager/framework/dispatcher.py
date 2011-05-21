@@ -330,9 +330,13 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
         dispatch_table = []
         for instanceid in self.dispatch:
             dispatch_table.append({
+                'instance ID': instanceid,
+                'patient': str(self.dispatch[instanceid]['instance'].patient),
                 'address': self.dispatch[instanceid]['instance'].patient.address,
                 'machine': self.dispatch[instanceid]['instance'].task.name,
-                'status': self.dispatch[instanceid]['instance'].status
+                'task': self.dispatch[instanceid]['instance'].name,
+                'status': self.dispatch[instanceid]['instance'].status,
+                'details': self.dispatch[instanceid]['instance'].details
                 })
         return dispatch_table
 
