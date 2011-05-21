@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<interaction id="toplevel" prefix="sup">
+<interaction id="toplevel" prefix="csup">
 	<message>
 	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: Find out how to get cognitive info or support.
 	</message>

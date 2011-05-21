@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<interaction id="toplevel" prefix="sup">
+<interaction id="toplevel" prefix="esup">
 	<message>
 	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: Find out how to get emotional support as a cancer survivor.
 	</message>

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<interaction id="toplevel" prefix="read">
+<interaction id="toplevel" prefix="phys">
 	<message>
 	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: Learn about physical activities to stay healthy.
 	</message>
@@ -16,7 +16,7 @@
 		==================================================
 		-->
 		
-		<response pattern="out.*door" condition="{% participant.age >= 18 %}" id="offer_outdoor_adult">
+		<response pattern="out.*door" condition="{% if participant.age &gt;= 18 %}ok{% endif %}" id="offer_outdoor_adult">
 			<message>
 			Great. There is a free outdoor adventure program for survivors at all skill level. Would u like to learn more? Text YES or NO.
 			</message>
@@ -115,7 +115,7 @@
 		=== OUTDOOR ACTIVITIES (Non-adults)
 		==================================================
 		-->
-		<response pattern="out.*door" condition="{% participant.age < 18 %}" id="offer_outdoor_nonadult">
+		<response pattern="out.*door" condition="{% if participant.age &lt; 18 %}ok{% endif %}" id="offer_outdoor_nonadult">
 			<message>
 			Great. There is a free outdoor camp for teen survivors. Would u like 2 learn more about the program? Text YES or NO.
 			</message>
@@ -214,7 +214,7 @@
 		=== INDOOR ACTIVITIES (Adults)
 		==================================================
 		-->
-		<response pattern="in.*door" condition="{% participant.age >= 18 %}"  id="offer_indoor_adult">
+		<response pattern="in.*door" condition="{% if participant.age &gt;= 18 %}ok{% endif %}"  id="offer_indoor_adult">
 			<message>
 			Great. There are free indoor classes 4 survivors. Would u like 2 learn more? Text YES or NO.
 			</message>
@@ -313,7 +313,7 @@
 		=== INDOOR ACTIVITIES (Non-adults)
 		==================================================
 		-->
-		<response pattern="in.*door" condition="{% participant.age < 18 %}" id="offer_indoor_nonadult">
+		<response pattern="in.*door" condition="{% if participant.age &lt; 18 %}ok{% endif %}" id="offer_indoor_nonadult">
 			<message>
 			Great. There are free indoor activities 4 surivors. Would u like 2 learn more? Text YES or NO.
 			</message>
