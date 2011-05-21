@@ -337,13 +337,16 @@ class BaseXmlTask(BaseTask):
         # we'll have to figure out how to get the parents'
         # removals into this list, or perhaps we should
         # just add the things we know we need?
-        
-        # remove the tree reference
-        # this will have to be manually reassociated
-        del info['tree']
-        # FIXME: kill the dispatch and instance attributes
-        del info['dispatch']
-        del info['instance']
+
+        try:
+            # remove the tree reference
+            # this will have to be manually reassociated
+            del info['tree']
+            # FIXME: kill the dispatch and instance attributes
+            del info['dispatch']
+            del info['instance']
+        except KeyError as e:
+            self.debug("Couldn't remove key from collection: %s" % (str(e)))
         
         return info
 
