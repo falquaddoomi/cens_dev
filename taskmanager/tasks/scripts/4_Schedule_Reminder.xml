@@ -3,7 +3,7 @@
 <interaction id="toplevel" prefix="sched">
 	<message>
 	{% load parse_date %}
-	A reminder that ur doctor appt 2 ask 4 a survivorship care plan is  {{ params.appt_date|relative_date }}. Remember 2 bring ur cancer treatment records. Reply 'cancel' if canceled. 
+	A reminder that ur survivorship clinic appt is {{ params.appt_date|relative_date }}.  Reply 'cancel' if canceled.	
 	</message>
 	
 	<response pattern="cancel">

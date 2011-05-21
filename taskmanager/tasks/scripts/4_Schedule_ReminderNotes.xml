@@ -3,16 +3,22 @@
 <interaction id="toplevel" prefix="sched">
 	<message>
 	{% load parse_date %}
-	A reminder that ur doctor appt 2 ask 4 a survivorship care plan is  {{ params.appt_date|relative_date }}. Remember 2 bring ur cancer treatment records. Reply 'cancel' if canceled. 
+	A reminder that ur survivorship clinic appt is {{ params.appt_date|relative_date }}. Do u have any questions 4 ur doctor? Text YES or NO.
 	</message>
 	
-	<response pattern="cancel">
+	<response pattern="yes">
 		<message>
-		Your appointment has been cancelled. Thank u 4 participating.
+		Please text back ur questions and we will send them 2 u 1hr before ur appt.
 		</message>
-	
-		<abort scope="process" />
+		
+		<response pattern=".*">
+			<store key="questionlist" value="{{ message }}" />
+			
+			<schedule task="4_Schedule_SendNotes" date="{{ params.appt_date }}" offset="1 hour before" />
+		</response>
 	</response>
 	
-	<!-- FIXME: canvass them for notes!! -->
+	<response pattern=".*">
+		<!-- just do nothing -->
+	</response>
 </interaction>
