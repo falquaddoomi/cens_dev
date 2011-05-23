@@ -2,8 +2,8 @@
 
 import django
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import User
-from django.db.models import *
 
 # needed to link Tasks to Templates
 import dbtemplates.models
@@ -154,7 +154,7 @@ class ProcessManager(models.Manager):
     def get_pending_processes(self):
         # a pending process has only pending tasks
         qset = super(ProcessManager, self).get_query_set()
-        return qset.exclude(taskinstance__status__in=["running","completed","errored"])
+        return qset.exclude(taskinstance__status__in=["running","completed","errored"]).distinct()
     
     def get_current_processes(self):
         # a current process has at least one running task, or a combination of pending and complete tasks
@@ -171,12 +171,12 @@ class ProcessManager(models.Manager):
         ##            )
         ##            ''')
         qset = super(ProcessManager, self).get_query_set()
-        return qset.filter(taskinstance__status="running")
+        return qset.filter(taskinstance__status="running").distinct()
 
     def get_completed_processes(self):
         # a completed process has only complete or possibly errored tasks
         qset = super(ProcessManager, self).get_query_set()
-        return qset.exclude(taskinstance__status__in=["pending","running"])
+        return qset.exclude(taskinstance__status__in=["pending","running"]).distinct()
 
     def reap_empty_processes(self):
         # removes any processes that have no referring instances
