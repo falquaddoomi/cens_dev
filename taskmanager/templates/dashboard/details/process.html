@@ -24,7 +24,7 @@
 		</td>
 
 		<td>
-		<b>{{ instance.task.name }}</b>
+		<b>{{ instance.name }}</b>
 		<div class="subtext">
 		{% if instance.status == "pending" %}
 		scheduled for {{ instance.schedule_date|date }}, {{ instance.schedule_date|time }}

@@ -69,7 +69,7 @@ $(document).ready(function() {
 						<div class="history_item {{ instance.get_status }}_light">
 							<div class="history_session_header">
 								<a id="session_{{ instance.id }}" name="session_{{ instance.id }}" href="/taskmanager/tasks/{{ instance.id }}/details/" class="history_task_link" rel="facebox">
-									<b>{{ instance.task.name }}</b>
+									<b>{{ instance.name }}</b>
 									<span class="history_session_date">ran on {{ instance.ran_date|date }}, {{ instance.ran_date|time }}</span>
 								</a>
 							</div>
@@ -100,7 +100,7 @@ $(document).ready(function() {
 								{% for instance in pending_tasks %}
 								<a href="/taskmanager/tasks/{{ instance.id }}/details/" class="history_task_link" rel="facebox">
 									<div class="history_task {{ instance.get_status }}_light">
-										<b>{{ instance.task.name }}</b> scheduled for {{ instance.schedule_date|date }}, {{ instance.schedule_date|time }}
+										<b>{{ instance.name }}</b> scheduled for {{ instance.schedule_date|date }}, {{ instance.schedule_date|time }}
 									</div>
 								</a>
 								{% endfor %}

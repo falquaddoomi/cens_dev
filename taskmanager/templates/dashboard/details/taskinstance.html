@@ -1,7 +1,7 @@
 {% extends "dashboard/details/generic.html" %}
 {% load parse_json %}
 
-{% block title %}Task Manager :: details :: {{ instance.task.name }}{% endblock %}
+{% block title %}Task Manager :: details :: {{ instance.name }}{% endblock %}
 {% block header %}<img src="/static/taskmanager/icons/Appointment.png"  class="dialog_header_icon" />{{ instance.name }}{% endblock %}
 
 {% block body %}
