@@ -8,9 +8,9 @@ from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_protect
 
-from taskmanager.models import *
+from taskmanager.models import Patient, Process, TaskTemplate, TaskInstance
 
-from datetime import datetime
+import datetime, time
 import parsedatetime.parsedatetime as pdt
 import parsedatetime.parsedatetime_consts as pdc
 
@@ -37,7 +37,7 @@ def merge_contextuals(context, request, patientid):
 def processes(request, patientid):
     field_vars = {
         'section': 'processes',
-        'tasktemplates': TaskTemplate.objects.all(),
+        'tasktemplates': TaskTemplate.objects.filter(schedulable=True),
         'pending_processes': Process.objects.get_pending_processes().filter(patient__id=patientid).order_by('add_date'),
         'current_processes': Process.objects.get_current_processes().filter(patient__id=patientid).order_by('add_date'),
         'completed_processes': Process.objects.get_completed_processes().filter(patient__id=patientid).order_by('add_date'),
@@ -77,7 +77,7 @@ def history(request, patientid):
         p = pdt.Calendar()
         from_clean = urllib.unquote(request.GET['from'].replace('+',' '))
         from_time = p.parse(from_clean)
-        from_datetime = datetime.fromtimestamp(time.mktime(from_time[0]))
+        from_datetime = datetime.datetime.fromtimestamp(time.mktime(from_time[0]))
 
         field_vars['from'] = from_clean
         if 'custom' in request.GET: field_vars['custom'] = 'true'
@@ -94,7 +94,7 @@ def history(request, patientid):
             
             if (to_time[1] > 0):
                 # it was parseable, make the range reflect this
-                to_datetime = datetime.fromtimestamp(time.mktime(to_time[0]))
+                to_datetime = datetime.datetime.fromtimestamp(time.mktime(to_time[0]))
                 field_vars['processes'] = patient_processes.filter(add_date__gte=from_datetime,add_date__lte=to_datetime)
             else:
                 # it was unparseable, just use from
@@ -128,7 +128,7 @@ def messagelog(request, patientid, mode='sms'):
         p = pdt.Calendar()
         from_clean = urllib.unquote(request.GET['from'].replace('+',' '))
         from_time = p.parse(from_clean)
-        from_datetime = datetime.fromtimestamp(time.mktime(from_time[0]))
+        from_datetime = datetime.datetime.fromtimestamp(time.mktime(from_time[0]))
 
         field_vars['from'] = from_clean
         if 'custom' in request.GET: field_vars['custom'] = 'true'
@@ -145,7 +145,7 @@ def messagelog(request, patientid, mode='sms'):
             
             if (to_time[1] > 0):
                 # it was parseable, make the range reflect this
-                to_datetime = datetime.fromtimestamp(time.mktime(to_time[0]))
+                to_datetime = datetime.datetime.fromtimestamp(time.mktime(to_time[0]))
                 field_vars['messages'] = Message.objects.filter(connection__identity=address,date__gte=from_datetime,date__lte=to_datetime)
             else:
                 # it was unparseable, just use from
@@ -219,7 +219,7 @@ def add_scheduled_task(request):
 
         p = pdt.Calendar()
         parsed_date = p.parse(request.POST['scheduled_date'] + " " + request.POST['scheduled_time'])
-        parsed_datetime = datetime.fromtimestamp(time.mktime(parsed_date[0]))
+        parsed_datetime = datetime.datetime.fromtimestamp(time.mktime(parsed_date[0]))
 
         TaskInstance.objects.create_task(
             patient = Patient.objects.get(pk=int(request.POST['patient'])),
@@ -246,10 +246,10 @@ def add_scheduled_process(request):
         # check if they chose to run it now or to run it later
         if command == "Schedule":
             parsed_date = p.parse(request.POST['scheduled_date'] + " " + request.POST['scheduled_time'])
-            parsed_datetime = datetime.fromtimestamp(time.mktime(parsed_date[0]))
+            parsed_datetime = datetime.datetime.fromtimestamp(time.mktime(parsed_date[0]))
         elif command == "Run Now":
             parsed_date = p.parse("today now")
-            parsed_datetime = datetime.fromtimestamp(time.mktime(parsed_date[0]))
+            parsed_datetime = datetime.datetime.fromtimestamp(time.mktime(parsed_date[0]))
 
         # collect the custom arguments into a dict
         custom_args = {}
