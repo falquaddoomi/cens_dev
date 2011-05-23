@@ -60,7 +60,10 @@ class ASAPParticipant(models.Model):
 
     def get_diagnoses_names(self):
         return self.diagnoses.values_list("proper_name", flat=True)
-
+    
+    def get_diagnoses_keys(self):
+        return self.diagnoses.values_list("id", flat=True)
+    
     def get_area(self):
         for d in ASAPParticipant.areas:
             if self.zipcode in ASAPParticipant.areas[d]:
@@ -84,22 +87,33 @@ class ASAPParticipant(models.Model):
         return result
         
     def get_online_resource(self):
-        try:
-            return self.get_applicable_resources("online")[0]
-        except:
-            return None
+        # FIXME: simplified -- don't use Resource at all for now
+        if len(set(["Leukemia","Hodgkin Lymphoma","Non-Hodgkin Lymphoma"]).intersection(self.get_diagnoses_names())):
+            return "bit.ly/LLSorg"
+        elif self.age < 18:
+            return "www.grouploop.org"
+        else:
+            return "csn.cancer.org/forum"
 
     def get_peer_resource(self):
-        try:
-            return self.get_applicable_resources("peer")[0]
-        except:
-            return None
+        # FIXME: simplified -- don't use Resource at all for now
+        if self.age >= 18 and self.get_area() == "Sherman Oaks":
+            return "WeSpark/i2y (Sherman Oaks) at 818-906-3022 or visit www.wespark.org"
+        elif self.age >= 18 and self.get_area() == "Bakersfield":
+            return "Comprehensive Blood & Cancer Center in Bakersfield at 661-862-7145 or email Michelle at mavila@cbccusa.com"
+        elif self.age >= 18 and self.get_area() == "Santa Barbara":
+            return "Cancer Center of Santa Barbara YA group at 805-563-5852 or www.ccsb.org"
+        elif "Brain/Central Nervous System" in self.get_diagnoses_names():
+            return "We Can Pediatric Brain Tumor Teen & Young Adult Program at 310-739-3433 or bit.ly/wecancc"
+        else:
+            return "UCLA Healthy Lives After Cancer at 310-794-2475 or on.fb.me/UCLAhlac"
 
     def get_1on1_resource(self):
-        try:
-            return self.get_applicable_resources("1on1")[0]
-        except:
-            return None
+        # FIXME: simplified -- don't use Resource at all for now
+        if self.age >= 18:
+            return "Cancer Support Community toll free at 888-793-9355 or  www.thewellnesscommunity.org"
+        else:
+            return "PADRES Contra El Cancer toll free at 800-269-4186 or www.iamhope.org"
 
     class Meta:
         verbose_name = "ASAP Participant"
