@@ -27,6 +27,13 @@ from taskmanager.framework import utilities
 # via ASAP_INITIAL_GOAL_DELAY and ASAP_BETWEEN_GOALS_DELAY
 import settings
 
+def is_number(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+
 @csrf_protect
 @logged_in_or_basicauth()
 @transaction.commit_on_success
@@ -47,7 +54,7 @@ def signupform(request):
             np = Patient(
                 address = processed_phone,
                 email = request.POST['email'],
-                contact_pref = 'clickatell',
+                contact_pref = 'sms',
                 first_name = request.POST['firstname'],
                 last_name = request.POST['lastname']
                 )
@@ -67,8 +74,8 @@ def signupform(request):
             lastname=request.POST['lastname'],
             cellphone=request.POST['cellphone'],
             email=request.POST['email'],
-            age=request.POST['age'],
-            zipcode=request.POST['zipcode'],
+            age=request.POST['age'] if is_number(request.POST['age']) else None,
+            zipcode=request.POST['zipcode'] if is_number(request.POST['zipcode']) else None,
             questionnaire_pref=request.POST['questionnaire_pref'],
             other_diagnosis=request.POST['diagnosis_other_description']
             )
