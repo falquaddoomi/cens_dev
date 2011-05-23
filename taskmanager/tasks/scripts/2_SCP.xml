@@ -7,32 +7,63 @@
 
 	<timeout delay="1 hour">
 		<message>
-		Please call ur doctor 2 schedule an appt 2 ask 4 a survivorship care plan. After scheduling the appt, text back w/date &amp;  time (ex. 2/28/2011 @5:15 PM).
+		Please call ur doctor 2 schedule an appt 2 ask 4 a survivorship care plan. After scheduling the appt, text back w/date &amp; time (ex. 2/28/2011 @5:15 PM).
 		</message>
 		
 		<response id="appt_prompt" type="date_time">
 			<message>
 			{% load parse_date %}
-			Ur appt is {{ parsed_datetime|relative_date }}. Is this correct? If so, text back "ok". If not, text back date &amp;  time again.
+			Ur appt is {{ parsed_datetime|relative_date }}. Is this correct? If so, text back "ok". If not, text back date &amp; time again.
 			</message>
-			
-			<response pattern="ok">
-				<store key="appt_date" value="{{ parsed_datetime }}" />
-				
-				<message>
-				Ur appt is {{ parsed_datetime }}. U will be reminded the day b4 and the morning of ur appt.
-				</message>
-				
-				<schedule task="2_SCP_Reminder" date="{{ parsed_datetime }}" offset="1 day before" />
-				<schedule task="2_SCP_Reminder" date="{{ parsed_datetime }}" offset="4 hours before" />
-				<schedule task="2_SCP_Followup" date="{{ parsed_datetime }}" offset="4 hours after" />
-			</response>
-			
+
+			<store key="appt_pending" value="{{ parsed_datetime|date:'m/d/Y g:i A' }}" />
+
+			<scope id="reask_datetime">
+				<response pattern="ok">
+					<store key="appt_date" value="{{ params.appt_pending }}" />
+
+					<message>
+					{% load parse_date %}
+					Ur appt is {{ params.appt_date|relative_date }}. U will be reminded the day b4 and the morning of ur appt.
+					</message>
+
+					<schedule task="2_SCP_Reminder" date="{{ params.appt_date }}" offset="1 day before" />
+					<schedule task="2_SCP_Reminder" date="{{ params.appt_date }}" offset="4 hours before" />
+					<schedule task="2_SCP_Followup" date="{{ params.appt_date }}" offset="4 hours after" />
+				</response>
+
+				<response type="date_time">
+					<link target="appt_prompt" />
+				</response>
+
+				<response pattern=".*">
+					<message>
+					Sorry, I couldn't understand your response; is {{ params.appt_pending }} correct? Text back a date or time if not, or "ok" to accept.
+					</message>
+
+					<link target="reask_datetime" />
+				</response>
+			</scope>
+		</response>
+
+		<response id="completely_misunderstood" pattern=".*">
+			<message>
+			Sorry, I couldn't understand your response. Call your doctor &amp; text back a date and time, or 'cancel' to stop.
+			</message>
+
 			<response type="date_time">
 				<link target="appt_prompt" />
 			</response>
 			
-			<!-- FIXME: what if they text back something else? -->
+			<response pattern="cancel">
+				<message>
+				Thank u 4 participating.
+				</message>
+			</response>
+			
+			<response pattern=".*">
+				<link target="completely_misunderstood" />
+			</response>
 		</response>
 	</timeout>
 </interaction>

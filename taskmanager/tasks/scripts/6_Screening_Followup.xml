@@ -2,7 +2,7 @@
 
 <interaction id="toplevel" prefix="screen">
 	<message>
-	Did u attend ur appt for {{ params.screening }}? Reply YES or NO.
+	Did u attend ur {{ params.screening }}? Reply YES or NO.
 	</message>
 	
 	<response pattern="yes">

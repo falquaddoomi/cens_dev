@@ -75,7 +75,7 @@
 								<link target="forgot_outdoor_adult" />
 							</response>
 							
-							<response pattern="(like|participate|other)">
+							<response pattern="(can'?t|like|participate|other)">
 								<link target="reconsider_outdoor_adult" />
 							</response>
 						</response>
@@ -174,7 +174,7 @@
 								<link target="forgot_outdoor_nonadult" />
 							</response>
 							
-							<response pattern="(like|participate|other)">
+							<response pattern="(can'?t|like|participate|other)">
 								<link target="reconsider_outdoor_nonadult" />
 							</response>
 						</response>
@@ -273,7 +273,7 @@
 								<link target="forgot_indoor_adult" />
 							</response>
 							
-							<response pattern="(like|participate|other)">
+							<response pattern="(can'?t|like|participate|other)">
 								<link target="reconsider_indoor_adult" />
 							</response>
 						</response>
@@ -285,7 +285,7 @@
 						</message>
 						
 						<timeout delay="in 7 days">
-							<link target="contacted_outdoor_adult" />
+							<link target="contacted_indoor_adult" />
 						</timeout>
 					</response>
 				</timeout>
@@ -372,7 +372,7 @@
 								<link target="forgot_indoor_nonadult" />
 							</response>
 							
-							<response pattern="(like|participate|other)">
+							<response pattern="(can'?t|like|participate|other)">
 								<link target="reconsider_indoor_nonadult" />
 							</response>
 						</response>

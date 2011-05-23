@@ -16,7 +16,7 @@
 		==================================================
 		-->
 		<response pattern="online" id="online_resource">
-			<store key="resource" value="{{ participant.get_online_resource.text }}" />
+			<store key="resource" value="{{ participant.get_online_resource }}" />
 			
 			<message>
 			Hi {{ patient.first_name }}. Here is an online chat forum where u can talk w/ others survivors virtually. Visit {{ params.resource }}.
@@ -89,7 +89,7 @@
 		==================================================
 		-->
 		<response pattern="(peer|group)" id="peer_group_resource">
-			<store key="resource" value="{{ participant.get_peer_resource.text }}" />
+			<store key="resource" value="{{ participant.get_peer_resource }}" />
 			
 			<message>
 			Hi {{ patient.first_name }}. Here is a peer group where u can meet other survivors in person. Contact {{ params.resource }} 4 more info.
@@ -162,7 +162,7 @@
 		==================================================
 		-->
 		<response pattern="(one|1).*on.*(one|1)" id="one_on_one_resource">
-			<store key="resource" value="{{ participant.get_1on1_resource.text }}" />
+			<store key="resource" value="{{ participant.get_1on1_resource }}" />
 			
 			<message>
 			Hi {{ patient.first_name }}. Here is info on free 1-on-1 couseling. Contact {{ params.resource }} 4 more info.

@@ -13,6 +13,10 @@
 		
 		<response pattern=".*">
 			<store key="questionlist" value="{{ message }}" />
+
+			<message>
+			Thanks, u will be texted "{{ params.questionlist }}" b4 your appt.
+			</message>
 			
 			<schedule task="4_Schedule_SendNotes" date="{{ params.appt_date }}" offset="1 hour before" />
 		</response>

@@ -5,7 +5,7 @@
 	Hi {{ patient.first_name }}. We will be texting u resources 2 help with ur ASAP goal: Get copies of cancer treatment medical records. First contact the doctors who treated ur cancer or medical records office. U may need to fill out a written request form.
 	</message>
 	
-	<timeout delay="in 5 days">
+	<timeout id="requested_records_yet" delay="in 5 days">
 		<message>
 		Hi {{ patient.first_name }}. Did u request ur cancer treatment medical records?
 		</message>
@@ -15,7 +15,7 @@
 			Great! Under CA law, u have the right 2 get copies of ur medical record within 15 days of a written request.
 			</message>
 			
-			<timeout id="received_records_yet" delay="in 15 days">
+			<timeout delay="in 15 days">
 				<message>
 				Hi {{ patient.first_name }}. Have u received ur cancer treatment medical records?
 				</message>
@@ -28,7 +28,7 @@
 					<response pattern=".*">
 						<alert name="Feedback">
 							<param key="task">1_MedicalRecords</param>
-							<param key="status">Initial Success</param>
+							<param key="status">Received Records</param>
 							<param key="response">{{ message }}</param>
 						</alert>
 
@@ -38,12 +38,12 @@
 					</response>
 				</response>
 				
-				<response id="clrc_link" pattern="no">
+				<response pattern="no">
 					<message>
 					It's ur right 2 get copies of medical records w/in 15 days of a written request. Cancer Legal Resource Center can help, call toll free 866-843-2572 or visit www.CancerLegalResourceCenter.org
 					</message>
 					
-					<timeout delay="in 5 days">
+					<timeout id="clrc_link" delay="in 5 days">
 						<message>
 						Did u contact the Cancer Legal Resource Center 2 help u get ur medical records?  Text YES or NO.
 						</message>
@@ -56,7 +56,7 @@
 							<response pattern=".*">
 								<alert name="Feedback">
 									<param key="task">1_MedicalRecords</param>
-									<param key="status">Delayed Success</param>
+									<param key="status">Contacted CLRC</param>
 									<param key="response">{{ message }}</param>
 								</alert>
 								
@@ -74,7 +74,7 @@
 							<response pattern=".*">
 								<alert name="Feedback">
 									<param key="task">1_MedicalRecords</param>
-									<param key="status">Failed</param>
+									<param key="status">Did not Recieve Records</param>
 									<param key="response">{{ message }}</param>
 								</alert>
 								
@@ -88,32 +88,34 @@
 			</timeout>
 		</response>
 		
-		<response pattern="no">
-			<message>
+		<response id="didnt_ask_reason" pattern="no">
+			<message condition="{% if not params.repeating %}ok{% endif %}">
 			What is the reason 4 not asking for ur medical records? TEXT Busy, Can't find the #, Costs too much, or Other.
 			</message>
 			
-			<response pattern="No Time">
+			<unstore key="repeating" />
+			
+			<response pattern="(no time)|(busy)">
 				<message>
 				Life gets busy. We'll send u a friendly reminder in a week.
 				</message>
 				
 				<timeout delay="in 7 days">
-					<link target="received_records_yet" />
+					<link target="requested_records_yet" />
 				</timeout>
 			</response>
 			
-			<response pattern="Can't find #">
+			<response pattern="can'?t.*find.*#">
 				<message>
 				U can ask ur current doctor or social worker 4 help requesting ur cancer treatment medical records.
 				</message>
 				
 				<timeout delay="in 7 days">
-					<link target="received_records_yet" />
+					<link target="requested_records_yet" />
 				</timeout>
 			</response>
 			
-			<response pattern="Cost">
+			<response pattern="cost">
 				<message>
 				If ur current doctor requests copies of ur records, u may not have 2 pay.  Cancer Legal Resource Center can help. Call toll free 866-843-2572 or visit www.CancerLegalResourceCenter.org
 				</message>
@@ -123,7 +125,7 @@
 				</timeout>
 			</response>
 			
-			<response pattern="Other">
+			<response pattern="other">
 				<message>
 				Cancer Legal Resource Center can help w/ getting ur medical records. Call toll free 866-843-2572 or visit www.CancerLegalResourceCenter.org
 				</message>
@@ -131,6 +133,15 @@
 				<timeout delay="in 5 days">
 					<link target="clrc_link" />
 				</timeout>
+			</response>
+			
+			<response pattern=".*">
+				<message>
+				Sorry, I couldn't understand ur response. Text Busy, Can't find the #, Costs too much, or Other.
+				</message>
+				
+				<store key="repeating" value="true" />
+				<link target="didnt_ask_reason" />
 			</response>
 		</response>
 	</timeout>

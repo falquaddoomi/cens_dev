@@ -12,7 +12,7 @@
 		
 		<response pattern="yes">
 			<message>
-			Great. What late effect screening do u need 2 do first? Pick one &amp;  text us back the name of the screening u need (ex. EKG or blood test).
+			Great. What late effect screening do u need 2 do first? Pick one &amp; text us back the name of the screening u need (ex. EKG or blood test).
 			</message>
 			
 			<response pattern=".+">
@@ -29,10 +29,11 @@
 					</message>
 
 					<response pattern="ok">
-						<store key="appt_date" value="{{ parsed_datetime }}" />
+						<store key="appt_date" value="{{ parsed_datetime|date:'m/d/Y g:i A' }}" />
 
 						<message>
-						Ur appt for {{ params.screening }} is {{ params.appt_date }}. You'll be reminded the day before &amp;  morning of ur appointment.
+						{% load parse_date %}
+						Ur appt for ur {{ params.screening }} is {{ parsed_datetime|relative_date }}. You'll be reminded the day before &amp; morning of ur appointment.
 						</message>
 
 						<schedule task="6_Screening_Reminder" date="{{ parsed_datetime }}" offset="1 day before" />
@@ -70,7 +71,7 @@
 				</message>
 				
 				<response pattern="create">
-					<schedule task="2_SCP" date="in 5 minutes" />
+					<schedule task="2_SCP" date="in 1 minute" />
 				</response>
 				
 				<response pattern="copy">

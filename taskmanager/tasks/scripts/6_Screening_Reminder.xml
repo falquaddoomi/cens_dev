@@ -3,7 +3,7 @@
 <interaction id="toplevel" prefix="screen">
 	<message>
 	{% load parse_date %}
-	A reminder that ur appt 4 {{ params.screening }} is tomorrow {{ params.appt_date|relative_date }}. Reply 'cancel' if canceled.
+	A reminder that ur {{ params.screening }} is {{ params.appt_date|relative_date }}. Reply 'cancel' if canceled.
 	</message>
 	
 	<response pattern="cancel">

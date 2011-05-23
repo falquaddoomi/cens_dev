@@ -1,6 +1,6 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf8"?>
 
-<interaction id="toplevel" prefix="appt">
+<interaction id="toplevel" prefix="appt">	
 	<message>
 	Did u ask ur doctor 2 create a survivorship care plan? Reply YES or NO, or 'missed' if u missed ur appt.
 	</message>
@@ -30,10 +30,14 @@
 
 		<response pattern="no">
 			<message>
-			That’s ok. There are survivorship clinics that can create a survivorship care plan. Would u like info 2 find a local survivorship clinic?
+			That's ok. There are survivorship clinics that can create a survivorship care plan. Would u like info 2 find a local survivorship clinic?
 			</message>
 			
 			<response pattern="yes">
+				<message>
+				U will be contacted in 30min 2 start ur new goal: finding a survivorship clinic.
+				</message>
+				
 				<schedule task="3_FindSC" date="30 minutes after" />
 			</response>
 			
@@ -76,8 +80,26 @@
 	</response>
 	
 	<response pattern="missed">
-		<schedule task="2_SCP" date="5 minutes after">
-			<params key="repeating">true</params>
-		</schedule>
+		<message>
+		That's ok; would you like to reschedule? Text back yes or no.
+		</message>
+		
+		<response pattern="yes">
+			<schedule task="2_SCP" date="5 minutes after">
+				<params key="repeating">true</params>
+			</schedule>
+		</response>
+		
+		<response pattern="no">
+			<message>
+			Thank u 4 participating.
+			</message>
+			
+			<alert name="Feedback">
+				<param key="task">2_SCP_Followup</param>
+				<param key="status">Missed, Declined Reschedule</param>
+				<param key="response">(n/a)</param>
+			</alert>
+		</response>
 	</response>
 </interaction>

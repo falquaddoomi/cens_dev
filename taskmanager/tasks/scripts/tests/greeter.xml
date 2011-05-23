@@ -35,14 +35,4 @@
 		
 		<link target="toplevel" />
 	</response>
-	
-	<timeout delay="in 1 minute">
-		<message>
-		Hey, are you there, {{ patient.first_name }}?
-		</message>
-		
-		<store key="replied_already" value="true" />
-		
-		<link target="toplevel" />
-	</timeout>
 </interaction>

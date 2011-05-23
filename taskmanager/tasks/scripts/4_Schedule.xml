@@ -17,7 +17,7 @@
 			</message>
 			
 			<response pattern="ok">
-				<store key="appt_date" value="{{ parsed_datetime }}" />
+				<store key="appt_date" value="{{ parsed_datetime|date:'m/d/Y g:i A' }}" />
 				
 				<message>
 				{% load parse_date %}
