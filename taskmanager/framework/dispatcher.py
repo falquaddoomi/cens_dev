@@ -71,10 +71,6 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
         return True # i guess this means it succeeded? perhaps we shouldn't return anything
 
     def handle(self, msg):
-        # hold on to the msg text in case we need it later
-        # (e.g. for handling the entire message rather than the message sans the prefix)
-        original_text = msg.text
-        
         # determine which of our tasks, if any, should
         # receive notifications for the message
         # if we can't find any, return false
@@ -109,14 +105,60 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
         # =============================
         # == STEP 2. find the task based on a prefix
         # =============================
+        
+        # we're a prefix-matching dispatch, so let's strip off the prefix
+        parts = msg.text.partition(" ")
+        prefix = parts[0]
+        msg_content = parts[2]
 
+        # hold on to the msg text in case we need it later
+        # (e.g. for handling the entire message rather than the message sans the prefix)
+        original_text = msg.text
+
+        # set the message we have to the content part while we do the initial pass
+        msg.text = msg_content
+
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # ~~ SUB-STEP 2a. determine if it's a reserved prefix (e.g. "STOP")
+        # ~~ also determine if they're trying to interact with us while they're stopped
+        # ~~ and tell them that they have to 'resume' to receive messages again
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        if prefix.lower() == "stop":
+            # set their status to halted and tell them how to resume
+            patient.halted = True
+            patient.save()
+            msg.respond("You have opted-out of receiving messages. Text back 'resume' to start receiving messages again.")
+            return True
+        
+        if prefix.lower() == "resume":
+            if patient.halted:
+                # set their status to not halted and thank them for resuming
+                patient.halted = False
+                patient.save()
+                msg.respond("Thank you for opting-in to the system; you will receive messages again.")
+                return True
+            else:
+                msg.respond("You were not opted-out of the system; you will continue to receive messages.")
+            return True
+
+        if patient.halted:
+            # a halted patient can't interact with the system
+            # tell them that they have to send 'resume' to start again
+            msg.respond("You are currently opted-out of the system. Text back 'resume' to start receiving messages again.")
+            return True
+
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # ~~ SUB-STEP 2b. disambiguate colliding task prefixes
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        
         # before we begin, we have to ensure that we can uniquely refer
         # to each task by its prefix.
         # this is a hack, but if there's a collision we append a number
         # to each task's prefix to avoid it.
         # this applies until the task sets its prefix again.
         d = defaultdict(list)
-        for m in [self.dispatch[instance.id]['machine'] for instance in patient_taskinstances]:
+        for m in [self.dispatch[instance.id]['machine'] for instance in patient_taskinstances if instance.status == "running"]:
             d[m.prefix.rstrip(string.digits)].append(m)
 
         # look through our dictionary of machine prefixes for collisions
@@ -128,14 +170,10 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
                     # only renumber tasks that haven't already been renumbered
                     if not d[k][i].prefix[-1].isdigit():
                         d[k][i].prefix = k + str(i+1)
-        
-        # we're a prefix-matching dispatch, so let's strip off the prefix
-        parts = msg.text.partition(" ")
-        prefix = parts[0]
-        msg_content = parts[2]
 
-        # set the message we have to the content part while we do the initial pass
-        msg.text = msg_content
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # ~~ SUB-STEP 2c. find corresponding machine by prefix
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         # look through all the running tasks for our current patient
         for instance in patient_taskinstances:
@@ -270,10 +308,21 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
         Called prior to the router shutting down.
         """
         for item in self.dispatch.itervalues():
-            # pickle the machine into its instance
-            item['instance'].machine_data = pickle.dumps(item['machine'])
-            item['instance'].save()
-            self.info("Pickled machine %s from instance ID %d" % (item['instance'].name, item['instance'].id))
+            try:
+                # ensure we have the most up-to-date version of the object
+                item['instance'] = TaskInstance.objects.get(pk=item['instance'].pk)
+                
+                # only pickle running machines
+                if item['instance'].status != "running":
+                    continue
+                # pickle the machine into its instance
+                item['instance'].machine_data = pickle.dumps(item['machine'])
+                item['instance'].save()
+                self.info("Pickled machine %s from instance ID %d" % (item['instance'].name, item['instance'].id))
+            except Exception as e:
+                # ok, we couldn't pickle it...this is likely b/c there's no associated instance
+                self.info("ERROR: Couldn't pickle machine %s from instance ID %d: %s" % (item['instance'].name, item['instance'].id, str(e)))
+                continue
 
     def thaw(self):
         """
