@@ -5,6 +5,7 @@ from parsedatetime import parsedatetime
 from datetime import datetime
 
 from django.template.loader import Template, Context
+from django.db.models import Q
 
 from base import BaseTask, TaskCompleteException
 from taskmanager.models import LogMessage, TaskTemplate, TaskInstance, Alert
@@ -35,6 +36,14 @@ class BaseXmlTask(BaseTask):
 
     def start(self):
         print "Beginning execution of %s!" % (self.params['script'])
+
+        # before we start, make sure no other task is running
+        # this is essentially the <abort scope="others" /> tag, but
+        # i figured it'd be useful enough to have happen all the time.
+        # FIXME: fold this into the dispatcher, perhaps?
+        othertasks = TaskInstance.objects.filter(process=self.instance.process,status="running").exclude(pk=self.instance.id)
+        for task in othertasks:
+            task.mark_completed()
         
         # read the first-level element (ostensibly interaction)
         self.scriptpath = os.path.join(os.path.dirname(__file__), "scripts", self.params['script'])
@@ -200,6 +209,14 @@ class BaseXmlTask(BaseTask):
                 except KeyError as ex:
                     raise XMLFormatException("%s node expects attribute '%s'" % (node.tag, ex.args[0]))
 
+                # FIXME: allows temporary override of the timeout duration for testing
+                try:
+                    if settings.FORCE_SCHEDULE_DELAY:
+                        schedule_date = utilities.parsedt(settings.FORCE_SCHEDULE_DELAY)
+                except NameError:
+                    # we don't need to do anything; we just assume the setting wasn't set
+                    pass
+
                 # look up the task template that they specified...
                 template = TaskTemplate.objects.get(name=tasktemplatename)
                 # grab its default arguments to start out
@@ -259,7 +276,7 @@ class BaseXmlTask(BaseTask):
                     self.instance.save()
                 except:
                     # not sure what to do here
-                    self.info("Unable to unstore key '%s' from parameters collection" % (key))
+                    self.dispatch.info("Unable to unstore key '%s' from parameters collection" % (key))
             elif node.tag == "alert":
                 # gather the key and value
                 try:
@@ -277,16 +294,26 @@ class BaseXmlTask(BaseTask):
                 # alert_args.update(default_context)
                 Alert.objects.add_alert(name, arguments=alert_args, patient=self.instance.patient)
             elif node.tag == "abort":
-                # remove all pending tasks belonging to the same process
-                TaskInstance.objects.filter(process=self.instance.process, status="pending").delete()
-                # and immediately conclude execution
-                raise TaskCompleteException()
+                # gather the key and value
+                try:
+                    scope = node.attrib['scope']
+                except KeyError as ex:
+                    raise XMLFormatException("%s node expects attribute '%s'" % (node.tag, ex.args[0]))
+
+                if scope == "process":
+                    # remove all pending tasks belonging to the same process
+                    TaskInstance.objects.filter(process=self.instance.process, status="pending").delete()
+                    # and immediately conclude execution
+                    raise TaskCompleteException()
+                elif scope == "others":
+                    # end all other tasks that belong to the same process
+                    TaskInstance.objects.filter(process=self.instance.process,status="running").exclude(pk=self.instance.id).update(status="completed")
             elif node.tag == "scope":
-                # immediately expands if the condition is present and evaluates to true
-                # if the condition is false, not present, or is blank, the node is ignored.
-                # it may still be useful to have scopes with constant false conditions as link targets, though
-                if ("condition" in node.attrib) and (self.templatize(node.attrib['condition'], default_context).strip()):
+                # immediately expands when reached
+                # if the condition is present and false,the node is ignored.
+                if ("condition" not in node.attrib) or (self.templatize(node.attrib['condition'], default_context).strip()):
                     self._exec_children(node, context)
+                    return # we have to break here as well so we don't die immediately
             elif node.tag == "link":
                 # immediately expand the link with the id specified by target
                 # but first we have to find it
@@ -346,8 +373,15 @@ class BaseXmlTask(BaseTask):
             del info['dispatch']
             del info['instance']
         except KeyError as e:
-            self.debug("Couldn't remove key from collection: %s" % (str(e)))
-        
+            self.dispatch.debug("Couldn't remove key from collection: %s" % (str(e)))
+
+        try:
+            # FIXME: kill the dispatch and instance attributes
+            del info['dispatch']
+            del info['instance']
+        except KeyError as e:
+            self.dispatch.debug("Couldn't remove key from collection: %s" % (str(e)))
+                    
         return info
 
     def __setstate__(self, info):
