@@ -149,7 +149,7 @@ def check_schedule():
     
     instances = TaskInstance.objects.get_due_tasks()
     
-    for instance in instances[0:1]:
+    for instance in instances:
         agent = Agent(reactor)
 
         # ensure that the user is not halted -- if they are, we can't execute this task :\
@@ -176,6 +176,9 @@ def check_schedule():
 
         d.addCallback(task_finished, instanceid=instance.id)
         d.addErrback(task_errored, instanceid=instance.id)
+
+        # we only want to process one per iteration, so break
+        break
         
     # run again in a bit
     reactor.callLater(settings.SCHEDULER_CHECK_INTERVAL, check_schedule)
@@ -198,6 +201,11 @@ def check_timeouts():
     
     for instance in instances:
         agent = Agent(reactor)
+
+        # ensure that the user is not halted -- if they are, we can't execute this task :\
+        if instance.patient.halted:
+            # print "ERROR: Cannot timeout task: %s (%d), user is in the halt status" % (sched_task.task.name, sched_task.id)
+            continue
         
         print "Timing out instance: %s (%d)" % (instance.task.name, instance.id)
 
