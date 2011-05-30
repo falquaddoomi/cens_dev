@@ -51,6 +51,7 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
         instance.mark_running()
         
         # create a new machine instance which we'll use to handle the interaction
+        # we pass it a reference to the dispatch and a reference to its corresponding db entity
         machine = self.machines[instance.task.id](self, instance)
         
         # add the new session/machine to the dispatch so we can route messages to it later
@@ -149,30 +150,7 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
             return True
 
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        # ~~ SUB-STEP 2b. disambiguate colliding task prefixes
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        
-        # before we begin, we have to ensure that we can uniquely refer
-        # to each task by its prefix.
-        # this is a hack, but if there's a collision we append a number
-        # to each task's prefix to avoid it.
-        # this applies until the task sets its prefix again.
-        d = defaultdict(list)
-        for m in [self.dispatch[instance.id]['machine'] for instance in patient_taskinstances if instance.status == "running"]:
-            d[m.prefix.rstrip(string.digits)].append(m)
-
-        # look through our dictionary of machine prefixes for collisions
-        for k in d:
-            if len(d[k]) > 1:
-                # multiple elements mapped to the same key means there's a collision
-                # we have to renumber the prefixes, then
-                for i in xrange(0, len(d[k])):
-                    # only renumber tasks that haven't already been renumbered
-                    if not d[k][i].prefix[-1].isdigit():
-                        d[k][i].prefix = k + str(i+1)
-
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        # ~~ SUB-STEP 2c. find corresponding machine by prefix
+        # ~~ SUB-STEP 2b. find corresponding machine by prefix
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         # look through all the running tasks for our current patient
@@ -353,8 +331,35 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
                 instance.mark_errored("Unable to unpickle associated machine from the machine_data field: %s" % (str(e)))
 
     # ==============================
-    # == helpers for dealing with incoming and outgoing messages
+    # == supports for other parts of the framework
     # ==============================
+
+    def request_prefix(self, patient, desired_prefix):
+        """
+        Called by a task that's about to associate itself with a prefix; returns
+        a prefix that can be unambiguously associated with the task (preferably
+        desired_prefix as-is).
+
+        If desired_prefix is not in use, desired_prefix is returned as-is.
+        If it is in use, returns an unambiguous form of the prefix, e.g. "appt2".
+        """
+
+        patient_taskinstances = TaskInstance.objects.get_running_tasks().filter(patient=patient)
+
+        # add all the prefixes for running machines belonging to the current user to a list
+        prefixes = []
+        for m in [self.dispatch[instance.id]['machine'] for instance in patient_taskinstances if instance.status == "running"]:
+            prefixes.append(m)
+
+        # check our dictionary of machine prefixes for collisions
+        # keep trying to find a new prefix until we get a unique one
+        new = desired_prefix
+        pid = 2
+        while new in prefixes:
+            new = desired_prefix + str(pid)
+            pid += 1
+
+        return new
 
     def send(self, instance, message, accepts_response=False):
         """

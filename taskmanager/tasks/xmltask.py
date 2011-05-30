@@ -50,7 +50,7 @@ class BaseXmlTask(BaseTask):
         self.tree = etree.parse(self.scriptpath)
         interaction = self.tree.getroot()
         # grab some top-level params which apply to the entire task (unless overridden by a composite tag)
-        self.prefix = interaction.get("prefix")
+        self.prefix = self.dispatch.request_prefix(self.instance.patient, interaction.get("prefix"))
         # and start executing its children
         self._exec_children(interaction)
         
@@ -134,7 +134,7 @@ class BaseXmlTask(BaseTask):
 
         # also copy the prefix attribute (if it exists) into our machine's registered prefix
         if 'prefix' in top.attrib:
-            self.prefix = top.attrib['prefix']
+            self.prefix = self.dispatch.request_prefix(self.instance.patient, top.attrib['prefix'])
 
         # pre-step: determine if there are any elements that require a response
         # that may be siblings to a <message> element. we need to know this
