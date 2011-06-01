@@ -12,6 +12,8 @@ from datetime import datetime
 from pytz import timezone
 import os, json
 
+import rapidsms.contrib.scheduler.models
+
 # =================================================================
 # ==== Users
 # =================================================================
@@ -423,3 +425,21 @@ class LogMessage(models.Model):
             return "Sent to %s: %s" % (self.instance.patient.address, self.message)
         else:
             return "Received from %s: %s" % (self.instance.patient.address, self.message)
+
+# =============
+# === the below allows us to associate rapidsms.contrib.scheduler events w/TaskInstances in a sane way
+# === ---------
+# === the introspection rules are so south can create migrations for the new TaskEventSchedule model,
+# === which uses a new PickledObjectField
+# =============
+
+# South support; see http://south.aeracode.org/docs/tutorial/part4.html#simple-inheritance
+try:
+    from south.modelsinspector import add_introspection_rules
+except ImportError:
+    pass
+else:
+    add_introspection_rules([], [r"^rapidsms\.contrib\.scheduler\.fields\.PickledObjectField"])
+
+class TaskEventSchedule(rapidsms.contrib.scheduler.models.EventSchedule):
+    owner = models.ForeignKey(TaskInstance)
