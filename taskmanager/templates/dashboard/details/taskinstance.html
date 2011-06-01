@@ -47,6 +47,9 @@
 	{% if instance.timeout_date %}
 	<input id="timeout_task_button" type="button" value="timeout" />
 	{% endif %}
+	{% if instance.status == "pending" %}
+	<input id="run_now_button" type="button" value="run task now" />
+	{% endif %}
 </div>
 
 <script type="text/javascript">
@@ -76,6 +79,22 @@ $(document).ready(function() {
 			dataType: 'text',
 			url: '/taskmanager/tasks/{{ instance.id }}/command/',
 			data: {'command': 'timeout'},
+			success: function(data) {
+				if (data == "REQUIRES_REFRESH")
+					location.reload(true);
+			}
+		});
+	});
+
+	$("#run_now_button").click(function() {
+		if (!confirm('Are you sure that you want to schedule this task to run right now?'))
+			return;
+
+		$.ajax({
+			type: 'POST',
+			dataType: 'text',
+			url: '/taskmanager/tasks/{{ instance.id }}/command/',
+			data: {'command': 'run_now'},
 			success: function(data) {
 				if (data == "REQUIRES_REFRESH")
 					location.reload(true);

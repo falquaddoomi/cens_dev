@@ -53,13 +53,15 @@ def taskinstance_command(request, instanceid):
         if command == "remove":
             instance.delete()
             return HttpResponse("REQUIRES_REFRESH")
-        
-        # dispatch on different commands
-        if command == "timeout":
+        elif command == "timeout":
             instance.timeout_date = datetime.now()
             instance.save()
             return HttpResponse("REQUIRES_REFRESH")
-
+        elif command == "run_now":
+            instance.schedule_date = datetime.now()
+            instance.save()
+            return HttpResponse("REQUIRES_REFRESH")
+        
         return HttpResponse("CMD_NOT_FOUND")
 
     # and render the default view

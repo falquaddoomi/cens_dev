@@ -76,8 +76,6 @@ class BaseXmlTask(BaseTask):
         return False
 
     def timeout(self):
-        print "Got a timeout, executing..."
-        
         # if there aren't any pending conditions, this is a good time to throw a TaskCompleteException
         if not self.conditions:
             raise TaskCompleteException()
