@@ -16,6 +16,5 @@ admin.site.register(AlertType)
 admin.site.register(Alert)
 
 # admin visibility for scheduled message reminders
-from rapidsms.contrib.scheduler.models import *
-admin.site.register(EventSchedule)
+admin.site.register(TaskEventSchedule)
 

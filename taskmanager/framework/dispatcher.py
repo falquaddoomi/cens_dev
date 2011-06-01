@@ -437,29 +437,6 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
                 })
         return dispatch_table
 
-    # scheduling stuff goes here
-
-    def schedule_response_reminder(self, d):
-        self.debug('in App.schedulecallback(): self.router: %s', self.router)
-        cb = d.pop('callback')
-        m = d.pop('minutes')
-        reps = d.pop('repetitions')
-        self.debug('callback:%s; minutes:%s; repetitions:%s; kwargs:%s',cb,m,reps,d)
-        
-        t = datetime.now()
-        s = timedelta(minutes=m)
-    
-        # for n in [(t + 1*s), (t + 2*s), ... (t + r+s)], where r goes from [1, reps+1)
-        #for st in [t + r*s for r in range(1,reps+1)]:
-        # MLL: Changed to do one at a time, so resend will schedule the next one
-        schedule = EventSchedule(callback=cb, minutes=ALL, callback_kwargs=d, start_time=t+s, count=1)
-        schedule.save()
-        self.debug('scheduling a reminder to fire after %s at %s, id=%d', s, s+t, schedule.id)
-
-        # faisal: this works:
-        # d = EventSchedule(callback="taskmanager.framework.dispatcher.resend_message", minutes=ALL, start_time=datetime.now(), count=1)
-        # d.save()
-
 # =============================================================
 # === signal handlers and other miscellanea below...
 # =============================================================
@@ -469,7 +446,7 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
 from django.db.models.signals import pre_delete
 pre_delete.connect(TaskDispatcher._outer_instance_removed, sender=TaskInstance)
 
-# handles dispatching an EventSchedule event into the dispatch, properly
+# handles dispatching a TaskEventSchedule event into the dispatch, properly
 def resend_message(router, instanceid, message):
     app = router.get_app('taskmanager')
     assert (app.router==router)
