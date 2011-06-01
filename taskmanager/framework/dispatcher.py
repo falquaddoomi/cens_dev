@@ -10,12 +10,14 @@ and will invoke the handle() event on that task instance.
 import json, string, pickle
 from django.db.models import Count
 
-from collections import defaultdict
+from rapidsms.contrib.scheduler.models import EventSchedule
 
 from rapidsms.log.mixin import LoggerMixin
-from taskmanager.models import Patient, Task, Process, TaskInstance, LogMessage
+from taskmanager.models import Patient, Task, Process, TaskInstance, TaskEventSchedule, LogMessage
 from taskmanager.tasks.base import BaseTask, TaskCompleteException
-from utilities import KeepRefs
+from utilities import KeepRefs, parsedt
+
+import settings
 
 class TaskDispatcher(KeepRefs, LoggerMixin):
     def __init__(self, app):
@@ -108,6 +110,7 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
         # =============================
         
         # we're a prefix-matching dispatch, so let's strip off the prefix
+        # fyi: parts[1] contains the separator, in this case a single space
         parts = msg.text.partition(" ")
         prefix = parts[0]
         msg_content = parts[2]
@@ -162,6 +165,9 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
                 # it matches, so let's try to run handle on it
                 # we only give it the message, not the prefix
                 try:
+                    # remove any scheduled message resends for this task before we start
+                    instance.taskeventschedule_set.all().delete()
+                        
                     if machine.handle(msg):
                         # we handled it, stop looking for new ones
                         return True
@@ -198,6 +204,8 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
             msg.text = original_text
             
             try:
+                # remove any scheduled message resends for this task before we start
+                instance.taskeventschedule_set.all().delete()
                 # attempt to handle it...if we can't, we just drop to 3, the 'no running tasks' message
                 # we pass the task the full text, since they apparently didn't include a proper prefix
                 if machine.handle(msg): return True
@@ -222,6 +230,8 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
         # the App has told us that we have a task that's timed out, so let's give it a poke
         try:
             if instance.id in self.dispatch:
+                # remove any scheduled message resends for this task
+                instance.taskeventschedule_set.all().delete()
                 # clear the timeout
                 instance.timeout_date = None
                 instance.save()
@@ -361,7 +371,7 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
 
         return new
 
-    def send(self, instance, message, accepts_response=False):
+    def send(self, instance, message, accepts_response=False, resending=False):
         """
         Wraps the act of sending messages (whether they be replies or not); includes
         the prefix for the machine in the send.
@@ -369,6 +379,9 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
         if accepts_response is True, the "type prefix before your reply" text is added
         to the end of the message.
         """
+        # save this for scheduling response reminders
+        original_msg = message
+        
         # look up the machine and formulate the prefix
         # only append it if they have more than one running task
         if accepts_response and TaskInstance.objects.filter(patient=instance.patient,status="running").count() > 1:
@@ -376,6 +389,36 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
         # and send the message, finally
         LogMessage(instance=instance, message=message, outgoing=True).save()
         self.app.send(instance.patient.get_address(), message, identityType=instance.patient.contact_pref)
+
+        # also, if resends are enabled, add a few, and only if the message needs a response
+        # don't do this if the message doesn't accept a response, and certainly don't do this
+        # if we're already sending a response! (infinite messages are no good)
+        try:
+            if not resending and accepts_response:
+                # formulate all the data we need into a params packet
+                params = {
+                    'instanceid': instance.pk,
+                    'message': original_msg,
+                    }
+
+                # for each resend, we create a separate scheduled event...
+                start_time = datetime.now() # start us out at now
+                for i in xrange(0, settings.MESSAGE_RESEND_TRIES):
+                    # compute the date on which to send the thing
+                    # basically increments start_time in units of MESSAGE_RESEND_DELAY
+                    start_time = start_date = utilities.parsedt(settings.MESSAGE_RESEND_DELAY, start_time)
+                    
+                    # and create a TaskEventSchedule associated with this instance
+                    t = TaskEventSchedule(
+                        callback="taskmanager.framework.dispatcher.resend_message",
+                        minutes=ALL,
+                        callback_kwargs=params,
+                        start_time=start_time,
+                        count=1)
+                    t.save()
+        except:
+            # FIXME: is it ok to just ignore being unable to schedule message retries?
+            raise
 
     def get_dispatch_table(self):
         """
@@ -394,6 +437,29 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
                 })
         return dispatch_table
 
+    # scheduling stuff goes here
+
+    def schedule_response_reminder(self, d):
+        self.debug('in App.schedulecallback(): self.router: %s', self.router)
+        cb = d.pop('callback')
+        m = d.pop('minutes')
+        reps = d.pop('repetitions')
+        self.debug('callback:%s; minutes:%s; repetitions:%s; kwargs:%s',cb,m,reps,d)
+        
+        t = datetime.now()
+        s = timedelta(minutes=m)
+    
+        # for n in [(t + 1*s), (t + 2*s), ... (t + r+s)], where r goes from [1, reps+1)
+        #for st in [t + r*s for r in range(1,reps+1)]:
+        # MLL: Changed to do one at a time, so resend will schedule the next one
+        schedule = EventSchedule(callback=cb, minutes=ALL, callback_kwargs=d, start_time=t+s, count=1)
+        schedule.save()
+        self.debug('scheduling a reminder to fire after %s at %s, id=%d', s, s+t, schedule.id)
+
+        # faisal: this works:
+        # d = EventSchedule(callback="taskmanager.framework.dispatcher.resend_message", minutes=ALL, start_time=datetime.now(), count=1)
+        # d.save()
+
 # =============================================================
 # === signal handlers and other miscellanea below...
 # =============================================================
@@ -402,3 +468,19 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
 # so that we can clean up our associated instances, etc.
 from django.db.models.signals import pre_delete
 pre_delete.connect(TaskDispatcher._outer_instance_removed, sender=TaskInstance)
+
+# handles dispatching an EventSchedule event into the dispatch, properly
+def resend_message(router, instanceid, message):
+    app = router.get_app('taskmanager')
+    assert (app.router==router)
+
+    # look up the associated instance and die if we can't
+    try:
+        instance = TaskInstance.objects.get(pk=instanceid)
+    except:
+        return
+    
+    print "Retransmitting to patient %s: '%s'" % (instance.patient, message)
+
+    # attempt to resend it now
+    app.dispatch.send(instance, message, resending=True)
