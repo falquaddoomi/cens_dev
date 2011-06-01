@@ -7,7 +7,7 @@ and then which task for that user the message is intended for,
 and will invoke the handle() event on that task instance.
 """
 
-import json, string, pickle
+import json, string, pickle, datetime
 from django.db.models import Count
 
 from rapidsms.contrib.scheduler.models import EventSchedule
@@ -402,16 +402,17 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
                     }
 
                 # for each resend, we create a separate scheduled event...
-                start_time = datetime.now() # start us out at now
+                start_time = datetime.datetime.now() # start us out at now
                 for i in xrange(0, settings.MESSAGE_RESEND_TRIES):
                     # compute the date on which to send the thing
                     # basically increments start_time in units of MESSAGE_RESEND_DELAY
-                    start_time = start_date = utilities.parsedt(settings.MESSAGE_RESEND_DELAY, start_time)
+                    start_time = parsedt(settings.MESSAGE_RESEND_DELAY, start_time)
                     
                     # and create a TaskEventSchedule associated with this instance
                     t = TaskEventSchedule(
+                        owner=instance,
                         callback="taskmanager.framework.dispatcher.resend_message",
-                        minutes=ALL,
+                        minutes='*',
                         callback_kwargs=params,
                         start_time=start_time,
                         count=1)
