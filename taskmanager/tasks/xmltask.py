@@ -179,7 +179,7 @@ class BaseXmlTask(BaseTask):
                 try:
                     if settings.FORCE_TIMEOUT_DELAY:
                         triggerdate = utilities.parsedt(settings.FORCE_TIMEOUT_DELAY)
-                except NameError:
+                except:
                     # we don't need to do anything; we just assume the setting wasn't set
                     pass
         
@@ -211,7 +211,7 @@ class BaseXmlTask(BaseTask):
                 try:
                     if settings.FORCE_SCHEDULE_DELAY:
                         schedule_date = utilities.parsedt(settings.FORCE_SCHEDULE_DELAY)
-                except NameError:
+                except:
                     # we don't need to do anything; we just assume the setting wasn't set
                     pass
 
