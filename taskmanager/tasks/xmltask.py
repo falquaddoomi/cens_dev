@@ -33,6 +33,11 @@ class BaseXmlTask(BaseTask):
         # create a little dict for our context that we'll carry around
         # FIXME: figure out when this should be cleared
         self.context = {}
+        
+        # create an empty slot that will hold the last node that was expanded.
+        # we'll use this to repeat an action when a poke is received from the UI.
+        self.last_expansion = None
+        self.last_expansion_context = None
 
     def start(self):
         print "Beginning execution of %s!" % (self.params['script'])
@@ -93,6 +98,17 @@ class BaseXmlTask(BaseTask):
 
         # nothing matched; let's tell our caller that
         return False
+        
+    def poke(self):
+        # attempt to re-execute the last executed node if it exists
+
+        # first check if there is a node to re-execute; if not, we can't do anything
+        if not self.last_expansion:
+            return False
+  
+        # attempt to look it up from the tree and run it
+        self._exec_children(self.tree.xpath(self.last_expansion)[0], self.last_expansion_context)
+        return True
 
     def send(self, message, accepts_response=True):
         # little helper for sending messages
@@ -114,6 +130,11 @@ class BaseXmlTask(BaseTask):
 
     def _exec_children(self, top, context=None):
         print "--> Executing children of %s..." % (top)
+        
+        # store the node we're on as the last-expanded node
+        # we'll use this to allow repeating the last taken action on a poke
+        self.last_expansion = self.tree.getpath(top)
+        self.last_expansion_context = context
         
         # first off, clear all pre-existing conditions
         self.conditions = []

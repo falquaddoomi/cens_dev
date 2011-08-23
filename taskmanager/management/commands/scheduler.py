@@ -128,6 +128,14 @@ def instance_timeout_errored(response, instanceid):
     print "- errored out on timing out %s (%d), reason: %s" % (t.task.name, instanceid, response.getErrorMessage())
     response.printTraceback()
 
+def instance_poke_finished(response, instanceid):
+    t = TaskInstance.objects.get(pk=instanceid)
+    print "- poked %s (%d) w/code %s" % (t.task.name, instanceid, str(response.code))
+
+def instance_poke_errored(response, instanceid):
+    t = TaskInstance.objects.get(pk=instanceid)
+    print "- errored out on poking %s (%d), reason: %s" % (t.task.name, instanceid, response.getErrorMessage())
+    response.printTraceback()
 
 # =========================================================================================
 # === actual scheduling methods
@@ -226,6 +234,40 @@ def check_timeouts():
 
         d.addCallback(instance_timeout_finished, instanceid=instance.id)
         d.addErrback(instance_timeout_errored, instanceid=instance.id)
+    
+    # ***
+    # also check pokes!
+    # ***
+    
+    pokedinstances = TaskInstance.objects.get_poked_tasks()
+    
+    for instance in pokedinstances:
+        agent = Agent(reactor)
+
+        # ensure that the user is not halted -- if they are, we can't execute this task :\
+        if instance.patient.halted:
+            # print "ERROR: Cannot timeout task: %s (%d), user is in the halt status" % (sched_task.task.name, sched_task.id)
+            continue
+        
+        print "Poking instance: %s (%d)" % (instance.task.name, instance.id)
+
+        payload_dict = {
+            'instanceid': instance.id
+            }
+
+        payload = urllib.urlencode(payload_dict)
+
+        d = agent.request(
+            'POST',
+            urlparse.urljoin(settings.SCHEDULER_TARGET_URL, "poke"),
+            Headers({
+                    "Content-Type": ["application/x-www-form-urlencoded;charset=utf-8"],
+                    "Content-Length": [str(len(payload))]
+                    }),
+            StringProducer(payload))
+
+        d.addCallback(instance_poke_finished, instanceid=instance.id)
+        d.addErrback(instance_poke_errored, instanceid=instance.id)
         
     # run again in a bit
     reactor.callLater(settings.SCHEDULER_CHECK_INTERVAL, check_timeouts)

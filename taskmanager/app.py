@@ -86,6 +86,13 @@ class App(rapidsms.apps.base.AppBase):
         self.dispatch.timeout(instance)
         return {'status': 'OK'}
 
+    def ajax_POST_poke(self, getargs, postargs=None):
+        # sent from the scheduler when an admin pokes a task into repeating its action.
+        # a poke generally initiates at the dashboard when an administrator wants a task
+        # to repeat whatever action is associated with the state at which it's halted.
+        instance = TaskInstance.objects.get(pk=postargs['instanceid'])
+        self.dispatch.poke(instance)
+        return {'status': 'OK'}
 
     # =========================================================================
     # === Utility methods

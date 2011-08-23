@@ -61,7 +61,11 @@ def taskinstance_command(request, instanceid):
             instance.schedule_date = datetime.now()
             instance.save()
             return HttpResponse("REQUIRES_REFRESH")
-        
+        elif command == "poke":
+            instance.poke_date = datetime.now()
+            instance.save()
+            return HttpResponse("REQUIRES_REFRESH")
+            
         return HttpResponse("CMD_NOT_FOUND")
 
     # and render the default view

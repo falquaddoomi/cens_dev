@@ -79,6 +79,19 @@ class BaseTask(object):
         can stop waiting for a reply and perform whatever actions are appropriate.
         """
         pass
+      
+    def poke(self):
+        """
+        Invoked when the dispatcher receives a 'poke' request from the scheduler.
+        
+        A poke generally initiates at the dashboard when an administrator wants a task
+        to repeat whatever action is associated with the state at which it's halted.
+        For instance, if a task reaches the threshold on message repeats and the
+        user still has not responded, but the admin would like the user to be reminded,
+        they could use a poke to have the original message resent (hopefully garnering
+        a response from the user this time). Interpret "repeat action" liberally.
+        """
+        pass
 
     # ==========================
     # == pickler functions

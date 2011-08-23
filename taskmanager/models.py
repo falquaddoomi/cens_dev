@@ -251,7 +251,11 @@ class TaskInstanceManager(models.Manager):
     def get_timedout_tasks(self):
         qset = super(TaskInstanceManager, self).get_query_set()
         return qset.filter(timeout_date__lte=datetime.now(), status="running")
-    
+
+    def get_poked_tasks(self):
+        qset = super(TaskInstanceManager, self).get_query_set()
+        return qset.filter(poke_date__lte=datetime.now(), status="running")
+        
     def get_completed_tasks(self):
         qset = super(TaskInstanceManager, self).get_query_set()
         return qset.filter(status="completed")
@@ -336,6 +340,7 @@ class TaskInstance(models.Model):
     timeout_date = models.DateTimeField(blank=True,null=True) # no status, waiting to be poked
     completed_date = models.DateTimeField(blank=True,null=True) # completed forever
     errored_date = models.DateTimeField(blank=True,null=True) # errored forever(?)
+    poke_date = models.DateTimeField(blank=True,null=True) # date on which the task should be retriggered, usually null
 
     objects = TaskInstanceManager()
 

@@ -250,7 +250,32 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
             # and mark the session complete
             instance.mark_completed()
             return True
-
+            
+    def poke(self, instance):
+        # the App has told us that we have a task that needs to be poked, so poke it
+        try:
+            if instance.id in self.dispatch:
+                # remove any scheduled message resends for this task
+                instance.taskeventschedule_set.all().delete()
+                # clear the poke
+                instance.poke_date = None
+                instance.save()
+                # poke the task
+                self.dispatch[instance.id]['machine'].poke()
+                # and tell them everything's ok?
+                return True
+            else:
+                # should we just silently ignore this?
+                self.debug("Attempted to poke instance ID %d, but could not find an associated machine in the dispatch" % (instance.id))
+                pass
+        except TaskCompleteException:
+            # this must've been raised from the machine's poke() event
+            # the machine is finished, remove it from the list
+            del self.dispatch[instance.id]
+            # and mark the session complete
+            instance.mark_completed()
+            return True
+            
     # ==============================
     # == machine management
     # ==============================

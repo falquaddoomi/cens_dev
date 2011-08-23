@@ -50,6 +50,9 @@
 	{% if instance.status == "pending" %}
 	<input id="run_now_button" type="button" value="run task now" />
 	{% endif %}
+	{% if instance.status == "running" %}
+	<input id="poke_button" type="button" value="poke task" />
+	{% endif %}
 </div>
 
 <script type="text/javascript">
@@ -95,6 +98,22 @@ $(document).ready(function() {
 			dataType: 'text',
 			url: '/taskmanager/tasks/{{ instance.id }}/command/',
 			data: {'command': 'run_now'},
+			success: function(data) {
+				if (data == "REQUIRES_REFRESH")
+					location.reload(true);
+			}
+		});
+	});
+
+	$("poke_button").click(function() {
+		if (!confirm('Are you sure that you want to poke this task? In most cases, this will cause it to repeat the last sent message.'))
+			return;
+
+		$.ajax({
+			type: 'POST',
+			dataType: 'text',
+			url: '/taskmanager/tasks/{{ instance.id }}/command/',
+			data: {'command': 'poke'},
 			success: function(data) {
 				if (data == "REQUIRES_REFRESH")
 					location.reload(true);

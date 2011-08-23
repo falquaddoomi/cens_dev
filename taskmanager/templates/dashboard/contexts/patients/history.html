@@ -89,6 +89,13 @@ $(document).ready(function() {
 									{% if instance.status != "completed" and instance.timeout_date %} times out in <b>{{ instance.timeout_date|timeuntil }}</b>{% endif %}
 									</td>
 								</tr>
+                            {% else %}
+                                {% if instance.status != "completed" and instance.poke_date %}
+                                <td class="msg_label"><b>state:</b></td>
+                                <td class="msg_data">
+                                waiting for poke on {{ instace.timeout_date }} to take effect.
+                                </td>
+                                {% endif %}
 							{% endif %}
 							</table>
 						</div>
