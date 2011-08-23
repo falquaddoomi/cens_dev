@@ -111,6 +111,10 @@ class BaseXmlTask(BaseTask):
         return True
 
     def send(self, message, accepts_response=True):
+        # ensure that we don't send messages to halted patients
+        if self.instance.patient.halted:
+            return
+
         # little helper for sending messages
         self.dispatch.send(self.instance, message, accepts_response)
 
