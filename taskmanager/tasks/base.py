@@ -92,6 +92,23 @@ class BaseTask(object):
         a response from the user this time). Interpret "repeat action" liberally.
         """
         pass
+    
+    def resurrect(self, resurrection_data):
+        """
+        Invoked in cases when a task has been lost and has to be manually reconstructed
+        with externally populated data.
+        
+        This is used by a developer in extreme cases when a running task wasn't successfully
+        pickled, causing it to be omitted from the running task table. In this case, a
+        'resurrection string' can be provided in an attempt to restore
+        the task to a running state, which will be recognized and used by the router when
+        it's restarted (during the thaw() portion of the router's startup process). The format
+        of the resurrect string depends on the task's definition of it, so consult overrided
+        resurrect() methods in classes which inherit from this class.
+        
+        Returns True if the resurrection was successful, False otherwise.
+        """
+        return True
 
     # ==========================
     # == pickler functions

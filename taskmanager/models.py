@@ -417,7 +417,7 @@ class TaskInstance(models.Model):
         verbose_name_plural = "task instances"
         
     def __unicode__(self):
-        return "Task Instance for %s on %s" % (self.patient.address, self.task.name)
+        return "Task Instance %d for %s on %s" % (self.id, self.patient.address, self.task.name)
 
 class LogMessage(models.Model):
     instance = models.ForeignKey(TaskInstance)

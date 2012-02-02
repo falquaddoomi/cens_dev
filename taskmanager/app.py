@@ -93,6 +93,10 @@ class App(rapidsms.apps.base.AppBase):
         instance = TaskInstance.objects.get(pk=postargs['instanceid'])
         self.dispatch.poke(instance)
         return {'status': 'OK'}
+        
+    def ajax_GET_thaw(self, getargs, postargs=None):
+        self.dispatch.thaw()
+        return {'status': 'OK'}
 
     # =========================================================================
     # === Utility methods

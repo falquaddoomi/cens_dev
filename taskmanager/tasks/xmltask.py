@@ -109,6 +109,37 @@ class BaseXmlTask(BaseTask):
         # attempt to look it up from the tree and run it
         self._exec_children(self.tree.xpath(self.last_expansion)[0], self.last_expansion_context)
         return True
+        
+    def resurrect(self, resurrection_data):
+        """
+        Allows this task to be reconstructed from the machine_data field in the database for this
+        task. The format is as follows:
+        
+        <xpath expression>
+        
+        The xpath expression will be parsed and the machine will start execution from the node specified,
+        without any supporting context that was part of the original machine, of course.
+        """
+        
+        print "Recreating task with script %s!" % (self.params['script'])
+        
+        # read the first-level element (ostensibly interaction)
+        self.scriptpath = os.path.join(os.path.dirname(__file__), "scripts", self.params['script'])
+        self.tree = etree.parse(self.scriptpath)
+        
+        # grab some top-level params which apply to the entire task (unless overridden by a composite tag)
+        interaction = self.tree.getroot()
+        # FIXME: this may fail if the task's prefix is already occupied...hopefully this won't happen too much
+        self.prefix = interaction.get("prefix")
+        
+        # look up the node to expand
+        node = self.tree.xpath(resurrection_data)[0]
+        if node is None: return False
+
+        # and start executing its children
+        self._exec_children(node)
+        
+        return True
 
     def send(self, message, accepts_response=True):
         # ensure that we don't send messages to halted patients

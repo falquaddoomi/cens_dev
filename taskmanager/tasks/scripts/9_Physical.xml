@@ -125,7 +125,7 @@
 				Camp Ronald McDonald offers free teen camps in CA. Visit www.campronaldmcdonald.org or call toll free 800-625-7295. We'll text u in a week.
 				</message>
 				
-				<timeout delay="in 7 days" id="contacted_outdoor_adult">
+				<timeout delay="in 7 days" id="contacted_outdoor_nonadult">
 					<message>
 					Did u contact Camp Ronald McDonald's (www.campronaldmcdonald.org) to learn about their free outdoor camp? Text YES or NO.
 					</message>

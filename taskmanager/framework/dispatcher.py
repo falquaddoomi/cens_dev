@@ -241,7 +241,7 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
                 return True
             else:
                 # should we just silently ignore this?
-                self.debug("Attempted to invoke timeout on instance ID %d, but could not find an associated machine in the dispatch" % (instance.id))
+                self.info("ERROR: Attempted to invoke timeout on instance ID %d, but could not find an associated machine in the dispatch" % (instance.id))
                 pass
         except TaskCompleteException:
             # this must've been raised from the machine's timeout() event
@@ -260,13 +260,18 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
                 # clear the poke
                 instance.poke_date = None
                 instance.save()
-                # poke the task
-                self.dispatch[instance.id]['machine'].poke()
+                
+                # make sure that the poke date has actually be cleared before we trigger the poke
+                instance = TaskInstance.objects.get(instance.id)
+                if instance.poke_date == None:
+                    # poke the task
+                    self.dispatch[instance.id]['machine'].poke()
+                    
                 # and tell them everything's ok?
                 return True
             else:
                 # should we just silently ignore this?
-                self.debug("Attempted to poke instance ID %d, but could not find an associated machine in the dispatch" % (instance.id))
+                self.info("ERROR: Attempted to poke instance ID %d, but could not find an associated machine in the dispatch" % (instance.id))
                 pass
         except TaskCompleteException:
             # this must've been raised from the machine's poke() event
@@ -344,10 +349,21 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
         machine_data is cleared afterward in order to prevent it from
         being possibly restored twice.
         """
+        
         for instance in TaskInstance.objects.filter(status="running",machine_data__isnull=False):
             try:
-                # unpickle the machine into the dispatch table
-                machine = pickle.loads(str(instance.machine_data))
+                # check first for a resurrection string in the machine data
+                if str(instance.machine_data).startswith("@@resurrect:"):
+                    # if it's there, try to create a machine and run resurrect() on it
+                    machine = self.machines[instance.task.id](self, instance)
+                    machine.dispatch = self
+                    if not machine.resurrect(str(instance.machine_data)[12:]):
+                        print "Couldn't resurrect %d for some reason..." % (instance.id)
+                        raise Exception("Resurrection failed")
+                else:
+                     # unpickle the machine into the dispatch table
+                    machine = pickle.loads(str(instance.machine_data))
+                    
                 # reassociate the dispatch, since this is something that couldn't be pickled
                 machine.dispatch = self
                 self.dispatch[instance.id] = {
@@ -362,7 +378,10 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
             except Exception as e:
                 # hmm, i guess we should just keep moving on
                 # but i wonder if we should remove the task? or at least error it out?
-                self.info("ERROR: unable to unpickle machine %s from instance ID %d" % (instance.name, instance.id))
+                self.info(
+                    "ERROR: unable to unpickle machine %s from instance ID %d :: %s" %
+                    ( instance.name, instance.id, (str(e)) )
+                )
                 instance.mark_errored("Unable to unpickle associated machine from the machine_data field: %s" % (str(e)))
 
     # ==============================
