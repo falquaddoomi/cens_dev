@@ -96,7 +96,10 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
                 # unrecognizable backend...what now?
                 raise Exception("Unrecognizable backend")
         except Patient.DoesNotExist:
-            msg.respond("You're not a recognized user")
+            ## TODO: should we be sending messages to people who aren't users?
+            ## we've had an issue with spammers, so this is disabled for now
+            # msg.respond("You're not a recognized user")
+            self.info("Ignoring message since the sender is not a recognized user")
             return False
         except Exception as e:
             msg.respond(e.message)
@@ -262,7 +265,7 @@ class TaskDispatcher(KeepRefs, LoggerMixin):
                 instance.save()
                 
                 # make sure that the poke date has actually be cleared before we trigger the poke
-                instance = TaskInstance.objects.get(instance.id)
+                instance = TaskInstance.objects.get(id=instance.id)
                 if instance.poke_date == None:
                     # poke the task
                     self.dispatch[instance.id]['machine'].poke()
